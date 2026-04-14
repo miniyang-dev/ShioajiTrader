@@ -10,10 +10,8 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy frontend files
 COPY frontend/ ./
 
-# Install dependencies and build
 RUN npm install -g pnpm && \
     pnpm install && \
     pnpm run build
@@ -25,7 +23,6 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-builder
 
 WORKDIR /src
 
-# Copy solution and project files first (for caching)
 COPY ShioajiTrader.sln ./
 COPY src/ShioajiTrader.Api/ShioajiTrader.Api.csproj ./src/ShioajiTrader.Api/
 COPY src/ShioajiTrader.Application/ShioajiTrader.Application.csproj ./src/ShioajiTrader.Application/
@@ -33,76 +30,66 @@ COPY src/ShioajiTrader.Domain/ShioajiTrader.Domain.csproj ./src/ShioajiTrader.Do
 COPY src/ShioajiTrader.Infrastructure/ShioajiTrader.Infrastructure.csproj ./src/ShioajiTrader.Infrastructure/
 COPY src/ShioajiTrader.Presentation/ShioajiTrader.Presentation.csproj ./src/ShioajiTrader.Presentation/
 
-# Restore packages
 RUN dotnet restore
 
-# Copy all source files
 COPY src/ ./src/
 
-# Build and publish
 RUN dotnet publish src/ShioajiTrader.Api/ShioajiTrader.Api.csproj -c Release -o /app/publish
 
 # ================================================
 
-# Stage 3: Final Runtime Image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Stage 3: Final Runtime Image (Ubuntu 24.04 for GLIBC 2.39)
+FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install Python, pip, and curl for health checks
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3 \
-        python3-pip \
-        python3-venv \
-        curl \
-        libpq-dev \
+# Install required packages (Ubuntu 24.04 has GLIBC 2.39)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create app user for security
-RUN useradd --create-home --shell /bin/bash appuser
-
-# Install rshioaji globally (required for API calls)
+# Install rshioaji (requires GLIBC 2.38+)
 RUN pip3 install --no-cache-dir --break-system-packages rshioaji
 
-# Create wwwroot directory for static files
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+
+# Create directories
 RUN mkdir -p /app/wwwroot /app/src.data
 
-# Copy published backend from builder
+# Copy published backend
 COPY --from=backend-builder /app/publish .
 
-# Copy built frontend to wwwroot
+# Copy built frontend
 COPY --from=frontend-builder /app/dist ./wwwroot
 
-# Fix permissions - allow appuser to write to src.data
+# Fix permissions
 RUN chown -R appuser:appuser /app
 
-# Switch to non-root user
 USER appuser
-
-# Set working directory
 WORKDIR /app
 
-# Expose port
 EXPOSE 5000
 
-# Environment variables
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV Shioaji__BaseUrl=http://localhost:8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Start script: launch rshioaji first, then run .NET app
-# rshioaji will run in background, .NET app waits for it
+# Startup script
 CMD /bin/bash -c '\
     echo "Starting rshioaji server..." && \
     shioaji server start & \
     SHIOAJI_PID=$! && \
-    echo "Waiting for rshioaji to be ready (PID: $SHIOAJI_PID)..." && \
-    sleep 5 && \
+    echo "Waiting for rshioaji (PID: $SHIOAJI_PID)..." && \
+    sleep 8 && \
     echo "Starting ShioajiTrader API..." && \
     dotnet ShioajiTrader.Api.dll & \
     API_PID=$! && \
