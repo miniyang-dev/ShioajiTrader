@@ -38,24 +38,35 @@ RUN dotnet publish src/ShioajiTrader.Api/ShioajiTrader.Api.csproj -c Release -o 
 
 # ================================================
 
-# Stage 3: Final Runtime Image (Ubuntu 24.04 for GLIBC 2.39)
+# Stage 3: Final Runtime Image
+# Use Ubuntu 24.04 for GLIBC 2.39 compatibility with rshioaji
 FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install required packages (Ubuntu 24.04 has GLIBC 2.39)
+# Install .NET 8 Runtime and other dependencies
 RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
     python3 \
     python3-pip \
-    python3-venv \
-    curl \
     libgomp1 \
+    libssl3 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install .NET 8 Runtime
+RUN wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
+    dpkg -i /tmp/packages-microsoft-prod.deb && \
+    rm /tmp/packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends dotnet-runtime-8.0 aspnetcore-runtime-8.0 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install rshioaji (requires GLIBC 2.38+)
 RUN pip3 install --no-cache-dir --break-system-packages rshioaji
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser
 
 # Create directories
