@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6AA06370-A875-4F81-918D-DA8E6E60B79F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShioajiTrader.Api", "src\ShioajiTrader.Api\ShioajiTrader.Api.csproj", "{D537061B-D039-497C-929D-2BF92DC2FF60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShioajiTrader.Domain", "src\ShioajiTrader.Domain\ShioajiTrader.Domain.csproj", "{154739BA-4D36-4B7C-AA3D-FCAE860F2901}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShioajiTrader.Application", "src\ShioajiTrader.Application\ShioajiTrader.Application.csproj", "{39EFEF90-13D5-48B8-AE74-825FEFB271EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShioajiTrader.Infrastructure", "src\ShioajiTrader.Infrastructure\ShioajiTrader.Infrastructure.csproj", "{920DDFD8-AA1F-46A1-A504-70B9A920F5F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShioajiTrader.Presentation", "src\ShioajiTrader.Presentation\ShioajiTrader.Presentation.csproj", "{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D537061B-D039-497C-929D-2BF92DC2FF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D537061B-D039-497C-929D-2BF92DC2FF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D537061B-D039-497C-929D-2BF92DC2FF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D537061B-D039-497C-929D-2BF92DC2FF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{154739BA-4D36-4B7C-AA3D-FCAE860F2901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{154739BA-4D36-4B7C-AA3D-FCAE860F2901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{154739BA-4D36-4B7C-AA3D-FCAE860F2901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{154739BA-4D36-4B7C-AA3D-FCAE860F2901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39EFEF90-13D5-48B8-AE74-825FEFB271EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39EFEF90-13D5-48B8-AE74-825FEFB271EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39EFEF90-13D5-48B8-AE74-825FEFB271EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39EFEF90-13D5-48B8-AE74-825FEFB271EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{920DDFD8-AA1F-46A1-A504-70B9A920F5F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{920DDFD8-AA1F-46A1-A504-70B9A920F5F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{920DDFD8-AA1F-46A1-A504-70B9A920F5F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{920DDFD8-AA1F-46A1-A504-70B9A920F5F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D537061B-D039-497C-929D-2BF92DC2FF60} = {6AA06370-A875-4F81-918D-DA8E6E60B79F}
+		{154739BA-4D36-4B7C-AA3D-FCAE860F2901} = {6AA06370-A875-4F81-918D-DA8E6E60B79F}
+		{39EFEF90-13D5-48B8-AE74-825FEFB271EB} = {6AA06370-A875-4F81-918D-DA8E6E60B79F}
+		{920DDFD8-AA1F-46A1-A504-70B9A920F5F4} = {6AA06370-A875-4F81-918D-DA8E6E60B79F}
+		{777CDE04-60B0-4AD8-8EDC-60358AEE7ED4} = {6AA06370-A875-4F81-918D-DA8E6E60B79F}
+	EndGlobalSection
+EndGlobal
