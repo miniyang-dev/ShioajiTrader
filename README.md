@@ -68,31 +68,43 @@ ShioajiTrader/
 
 ## 🔧 環境設定
 
-### 前置需求
+### 前置需求（必要）
 
 | 項目 | 版本 | 說明 |
 |------|------|------|
 | .NET SDK | 8.0+ | [下載](https://dotnet.microsoft.com/download/dotnet/8.0) |
 | Node.js | 18+ | [下載](https://nodejs.org/) |
 | pnpm | 最新版 | `npm install -g pnpm` |
-| rshioaji | （可選）| 即時報價/下單需安裝 |
+| **Python** | 3.9+ | rshioaji 需要 |
+| **rshioaji** | 最新版 | **必要元件**，股票 API 服務 |
 
 ### 本地開發
 
 ```bash
-# 1. 還原 NuGet 套件
+# 1. 安裝 rshioaji（必要）
+pip install rshioaji
+
+# 2. 啟動 rshioaji 服務（保持運行）
+shioaji server start
+
+# 3. 新開終端，還原 NuGet 套件
 dotnet restore
 
-# 2. 啟動後端（Port 5000）
+# 4. 啟動後端（Port 5000）
 dotnet run --project src/ShioajiTrader.Api
 
-# 3. 新開終端，啟動前端開發伺服器（Port 5173）
+# 5. 再新開終端，啟動前端開發伺服器（Port 5173）
 cd frontend
 pnpm install
 pnpm dev
 ```
 
+> ⚠️ **重要**：`shioaji server start` 必須保持運行，否則 API 會回傳 502 Bad Gateway
+
 ### Docker 部署（Zeabur）
+
+> ⚠️ **注意**：Docker 容器內的 API 仍需要連線到 rshioaji 服務。
+> 請確保 rshioaji 服務已啟動，或修改 `Shioaji:BaseUrl` 指向外部服務。
 
 ```bash
 # 1. 建置映像
@@ -200,7 +212,16 @@ VITE_API_URL=http://localhost:5000
 
 - JWT Token 有效期：12 小時
 - 密碼應使用 hash，未來建議遷移到 PostgreSQL/Oracle
-- rshioaji 僅支援Simulation模式，正式交易需申請 API Key
+- **rshioaji 為必要元件**，請確保已啟動 `shioaji server start`
+- 目前僅支援 Simulation 模式，正式交易需申請 API Key
+
+---
+
+## ❓ 常見問題
+
+### Q: 出現 502 Bad Gateway 錯誤？
+**原因**：rshioaji 服務未啟動。
+**解決**：執行 `shioaji server start` 並保持運行。
 
 ---
 
