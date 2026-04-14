@@ -13,7 +13,7 @@ using ShioajiTrader.Infrastructure.Shioaji;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration
-var dataPath = builder.Configuration["Data:Path"] ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "src.data");
+var dataPath = builder.Configuration["Data:Path"] ?? Path.Combine(Directory.GetCurrentDirectory(), "src.data");
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "ShioajiTrader_SuperSecret_Key_Must_Be_At_Least_32_Characters";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ShioajiTrader";
 var shioajiBaseUrl = builder.Configuration["Shioaji:BaseUrl"] ?? "http://localhost:8080";
@@ -81,6 +81,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configure static files and SPA fallback
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapControllerRoute(
+    name: "fallback",
+    pattern: "{controller}/{action}/{id?}",
+    defaults: new { controller = "Home", action = "Index" });
+
+// SPA fallback - all other routes return index.html
+app.MapFallbackToFile("index.html");
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
