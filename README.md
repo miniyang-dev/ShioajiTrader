@@ -128,30 +128,35 @@ docker run -d -p 5000:5000 --name shioajitrader shioajitrader
 
 ## ⚙️ 環境變數
 
-### 後端設定（appsettings.json）
+### Zeabur 部署（必要）
 
-```json
-{
-  "Jwt": {
-    "Secret": "你的32位元以上密鑰",
-    "Issuer": "ShioajiTrader",
-    "Audience": "ShioajiTrader",
-    "ExpiryHours": 12
-  },
-  "Shioaji": {
-    "BaseUrl": "http://localhost:8080",
-    "TimeoutSeconds": 30
-  },
-  "Data": {
-    "Path": "./src.data"
-  }
-}
-```
+在 Zeabur 設定以下環境變數：
 
-### 前端設定（.env）
+| 變數 | 預設值 | 說明 |
+|------|--------|------|
+| `SJ_SIMULATION` | `true` | 模擬模式（true=不回傳真實報價）|
+| `SJ_API_KEY` | （需填入）| Shioaji API Key（向永豐金申請）|
+| `SJ_API_SECRET` | （需填入）| Shioaji API Secret |
+| `ASPNETCORE_ENVIRONMENT` | `Production` | .NET 環境 |
+
+> ⚠️ **重要**：若 `SJ_API_KEY` 和 `SJ_API_SECRET` 未設定，rshioaji 會顯示錯誤但仍可運行（Simulation 模式）
+
+### 本機開發（.env 檔案）
 
 ```env
-VITE_API_URL=http://localhost:5000
+SJ_SIMULATION=true
+SJ_API_KEY=your_api_key_here
+SJ_API_SECRET=your_api_secret_here
+```
+
+### Docker 運行
+
+```bash
+docker run -d -p 5000:5000 \
+  -e SJ_SIMULATION=true \
+  -e SJ_API_KEY=your_key \
+  -e SJ_API_SECRET=your_secret \
+  --name shioajitrader shioajitrader
 ```
 
 ---

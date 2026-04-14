@@ -39,12 +39,11 @@ RUN dotnet publish src/ShioajiTrader.Api/ShioajiTrader.Api.csproj -c Release -o 
 # ================================================
 
 # Stage 3: Final Runtime Image
-# Use Ubuntu 24.04 for GLIBC 2.39 compatibility with rshioaji
 FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install .NET 8 Runtime and other dependencies
+# Install .NET Runtime and dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -54,16 +53,16 @@ RUN apt-get update && apt-get install -y \
     libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install .NET 8 Runtime
-RUN wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
+# Install .NET 8 Runtime from Microsoft
+RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
     dpkg -i /tmp/packages-microsoft-prod.deb && \
     rm /tmp/packages-microsoft-prod.deb && \
     apt-get update && \
-    apt-get install -y --no-install-recommends dotnet-runtime-8.0 aspnetcore-runtime-8.0 && \
+    apt-get install -y dotnet-runtime-8.0 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install rshioaji (requires GLIBC 2.38+)
+# Install rshioaji
 RUN pip3 install --no-cache-dir --break-system-packages rshioaji
 
 # Create non-root user
@@ -86,23 +85,28 @@ WORKDIR /app
 
 EXPOSE 5000
 
+# Default environment variables for simulation mode
+ENV SJ_SIMULATION=true
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV Shioaji__BaseUrl=http://localhost:8080
+ENV PATH="/opt/dotnet:${PATH}"
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Startup script
-CMD /bin/bash -c '\
-    echo "Starting rshioaji server..." && \
+# Note: SJ_API_KEY and SJ_API_SECRET must be set in Zeabur environment variables
+ENTRYPOINT ["/bin/bash", "-c", "\
+    echo 'Starting rshioaji server...' && \
+    export PATH=\"/opt/dotnet:${PATH}\" && \
     shioaji server start & \
     SHIOAJI_PID=$! && \
-    echo "Waiting for rshioaji (PID: $SHIOAJI_PID)..." && \
-    sleep 8 && \
-    echo "Starting ShioajiTrader API..." && \
-    dotnet ShioajiTrader.Api.dll & \
+    echo 'Waiting for rshioaji (PID: $SHIOAJI_PID)...' && \
+    sleep 10 && \
+    echo 'Starting ShioajiTrader API...' && \
+    /opt/dotnet/dotnet ShioajiTrader.Api.dll & \
     API_PID=$! && \
-    trap "kill $SHIOAJI_PID $API_PID 2>/dev/null" EXIT && \
-    wait $API_PID'
+    trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT && \
+    wait $API_PID"]
