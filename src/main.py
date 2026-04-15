@@ -66,6 +66,12 @@ app.include_router(stocks_router, prefix="/api/stocks", tags=["Stocks"])
 app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
 
+# Health check - must be BEFORE StaticFiles mount to avoid being caught
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": "2026-04-15T00:00:00Z"}
+
 # Static files - serve Vue frontend assets
 frontend_path = Path("/app/wwwroot")
 if frontend_path.exists():
