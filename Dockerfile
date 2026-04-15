@@ -1,8 +1,8 @@
 # ================================================
-# ShioajiTrader - Docker Deployment
+# ShioajiTrader - Python FastAPI Backend
 # ================================================
 # Build: docker build -t shioajitrader .
-# Run:   docker run -d -p 5000:5000 --name shioajitrader shioajitrader
+# Run:   docker run -d -p 8080:8080 --name shioajitrader shioajitrader
 # ================================================
 
 # Stage 1: Build Frontend
@@ -17,112 +17,68 @@ RUN npm install -g pnpm && \
     pnpm run build
 
 # ================================================
-
-# Stage 2: Build .NET Backend
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-builder
-
-WORKDIR /src
-
-COPY ShioajiTrader.sln ./
-COPY src/ShioajiTrader.Api/ShioajiTrader.Api.csproj ./src/ShioajiTrader.Api/
-COPY src/ShioajiTrader.Application/ShioajiTrader.Application.csproj ./src/ShioajiTrader.Application/
-COPY src/ShioajiTrader.Domain/ShioajiTrader.Domain.csproj ./src/ShioajiTrader.Domain/
-COPY src/ShioajiTrader.Infrastructure/ShioajiTrader.Infrastructure.csproj ./src/ShioajiTrader.Infrastructure/
-COPY src/ShioajiTrader.Presentation/ShioajiTrader.Presentation.csproj ./src/ShioajiTrader.Presentation/
-
-RUN dotnet restore
-
-COPY src/ ./src/
-
-RUN dotnet publish src/ShioajiTrader.Api/ShioajiTrader.Api.csproj -c Release -o /app/publish
-
-# ================================================
-
-# Stage 3: Final Runtime Image
-FROM ubuntu:24.04 AS runtime
+# Stage 2: Python Backend
+FROM python:3.11-slim AS backend
 
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
-    python3-full \
-    python3-venv \
-    libgomp1 \
-    libssl3 \
-    libicu-dev \
-    openssl \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        libgomp1 \
+        libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment for Python packages
-RUN python3 -m venv /opt/venv
+# Copy requirements first for better caching
+COPY src/requirements.txt .
 
-# Install rshioaji in venv
-RUN /opt/venv/bin/pip install --upgrade pip && \
-    /opt/venv/bin/pip install rshioaji
+# Install Python dependencies (use pip cache)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Download and install .NET 8 Runtime + ASP.NET Core Runtime
-RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-8.0.0-linux-x64.tar.gz && \
-    wget -q https://dotnetcli.azureedge.net/dotnet/aspnetcore/Runtime/8.0.0/aspnetcore-runtime-8.0.0-linux-x64.tar.gz && \
-    mkdir -p /usr/share/dotnet && \
-    tar zxf dotnet-runtime-8.0.0-linux-x64.tar.gz -C /usr/share/dotnet && \
-    tar zxf aspnetcore-runtime-8.0.0-linux-x64.tar.gz -C /usr/share/dotnet && \
-    ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet && \
-    rm *.tar.gz
+# Copy source code
+COPY src/ .
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash appuser
+# ================================================
+# Stage 3: Final Runtime Image
+FROM python:3.11-slim AS runtime
 
-# Create directories
-RUN mkdir -p /app/wwwroot /app/src.data
+WORKDIR /app
 
-# Copy published backend
-COPY --from=backend-builder /app/publish .
+# Install minimal system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        libgomp1 \
+        libssl3 \
+        libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=backend /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend /usr/local/bin /usr/local/bin
+
+# Copy source code
+COPY src/ .
 
 # Copy built frontend
 COPY --from=frontend-builder /app/dist ./wwwroot
 
-# Fix permissions
-RUN chown -R appuser:appuser /app
-
-USER appuser
-WORKDIR /app
-
-EXPOSE 8081
+# Create data directory
+RUN mkdir -p /app/src.data
 
 # Environment variables
-ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="/usr/share/dotnet:/usr/bin:/opt/venv/bin:${PATH}"
-ENV VIRTUAL_ENV=/opt/venv
+ENV PYTHONUNBUFFERED=1
+ENV DATA_PATH=/app/src.data
 ENV SJ_SIMULATION=true
-ENV ASPNETCORE_URLS=http://+:8081
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV PORT=8080
 
-# Link rshioaji cache to persistent storage
-RUN mkdir -p /app/src.data/.shioaji && \
-    if [ ! -e /home/appuser/.shioaji ]; then \
-        ln -s /app/src.data/.shioaji /home/appuser/.shioaji; \
-    fi
-
-# Create startup script
-RUN cat > /app/start.sh << 'SCRIPT'
-#!/bin/sh
-echo 'Starting rshioaji server...'
-/opt/venv/bin/shioaji server start &
-SHIOAJI_PID=$!
-sleep 10
-echo 'Starting .NET API...'
-$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &
-API_PID=$!
-trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT
-wait $API_PID
-SCRIPT
-RUN chmod +x /app/start.sh
+# Expose port
+EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8081/health
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Use startup script
-ENTRYPOINT ["/app/start.sh"]
+# Run with uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
