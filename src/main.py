@@ -2,7 +2,7 @@
 ShioajiTrader - Python FastAPI Backend
 """
 import os
-import json
+import re
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -64,17 +64,28 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(stocks_router, prefix="/api/stocks", tags=["Stocks"])
 app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
 
-# Static files - serve Vue frontend
+# Static files - serve Vue frontend assets
 frontend_path = Path("/app/wwwroot")
 if frontend_path.exists():
-    # Mount at / for SPA fallback
-    # html=True makes it serve index.html for non-file routes
-    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+    # Mount /assets for static files (CSS, JS, images)
+    app.mount("/assets", StaticFiles(directory=str(frontend_path / "assets")), name="assets")
 
-# SPA fallback - for any non-API route, serve index.html
-@app.get("/{path:path}")
+# SPA fallback - serve index.html for all non-API routes
+@app.get("/{path:path}", include_in_schema=False)
 async def serve_spa(path: str):
     """Serve Vue SPA for all non-API routes"""
+    # Skip API routes
+    if path.startswith("api/"):
+        return {"detail": "Not Found"}
+    
+    index_path = frontend_path / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {"detail": "Not Found"}
+
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    """Serve Vue index.html"""
     index_path = frontend_path / "index.html"
     if index_path.exists():
         return FileResponse(str(index_path))
