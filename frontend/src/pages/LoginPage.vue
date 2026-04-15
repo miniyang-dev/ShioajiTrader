@@ -5,23 +5,23 @@
       
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
-          <label class="block text-sm text-gray-400 mb-2">API Key</label>
+          <label class="block text-sm text-gray-400 mb-2">帳號</label>
           <input
-            v-model="apiKey"
+            v-model="username"
             type="text"
             class="input-field w-full"
-            placeholder="請輸入 Shioaji API Key"
+            placeholder="請輸入帳號"
             required
           />
         </div>
         
         <div>
-          <label class="block text-sm text-gray-400 mb-2">API Secret</label>
+          <label class="block text-sm text-gray-400 mb-2">密碼</label>
           <input
-            v-model="apiSecret"
+            v-model="password"
             type="password"
             class="input-field w-full"
-            placeholder="請輸入 Shioaji API Secret"
+            placeholder="請輸入密碼"
             required
           />
         </div>
@@ -38,13 +38,6 @@
           {{ loading ? '登入中...' : '登入' }}
         </button>
       </form>
-
-      <p class="text-center text-gray-500 text-sm mt-4">
-        還沒有 API Key？<br/>
-        <a href="https://sinotrade.github.io/" target="_blank" class="text-purple-500 hover:underline">
-          前往申請
-        </a>
-      </p>
     </div>
   </div>
 </template>
@@ -56,13 +49,13 @@ import api from '../services/api'
 
 const router = useRouter()
 
-const apiKey = ref('')
-const apiSecret = ref('')
+const username = ref('')
+const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
 const handleLogin = async () => {
-  if (!apiKey.value || !apiSecret.value) {
+  if (!username.value || !password.value) {
     error.value = '請填寫所有欄位'
     return
   }
@@ -71,7 +64,7 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const response = await api.login(apiKey.value, apiSecret.value)
+    const response = await api.login(username.value, password.value)
     
     if (response.data.success) {
       localStorage.setItem('token', response.data.token)
