@@ -22,19 +22,27 @@ FROM python:3.11-slim AS backend
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies for shioaji (Rust + OpenSSL)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
+        wget \
+        git \
+        build-essential \
         libgomp1 \
         libssl3 \
+        libicu-dev \
+        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY src/requirements.txt .
 
-# Install Python dependencies (use pip cache)
-RUN pip install --no-cache-dir -r requirements.txt
+# Install uv for faster package installation
+RUN pip install --no-cache-dir uv
+
+# Install Python dependencies using uv (more reliable)
+RUN uv pip install --system -r requirements.txt
 
 # Copy source code
 COPY src/ .
@@ -45,7 +53,7 @@ FROM python:3.11-slim AS runtime
 
 WORKDIR /app
 
-# Install minimal system dependencies
+# Install minimal system dependencies for shioaji
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
