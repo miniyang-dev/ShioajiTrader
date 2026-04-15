@@ -43,7 +43,7 @@ FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install system dependencies (without pip, we'll use venv)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -58,12 +58,11 @@ RUN apt-get update && apt-get install -y \
 # Create virtual environment for Python packages
 RUN python3 -m venv /opt/venv
 
-# Install rshioaji in venv (no --break-system-packages needed)
+# Install rshioaji in venv
 RUN /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install rshioaji
 
 # Download and install .NET 8 Runtime + ASP.NET Core Runtime
-# Both are required for ASP.NET Core Web API
 RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-8.0.0-linux-x64.tar.gz && \
     wget -q https://dotnetcli.azureedge.net/dotnet/aspnetcore/Runtime/8.0.0/aspnetcore-runtime-8.0.0-linux-x64.tar.gz && \
     mkdir -p /usr/share/dotnet && \
@@ -72,16 +71,16 @@ RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-
     ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet && \
     rm *.tar.gz
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser
 
 # Create directories
 RUN mkdir -p /app/wwwroot /app/src.data
 
-# Copy published backend from builder
+# Copy published backend
 COPY --from=backend-builder /app/publish .
 
-# Copy built frontend to wwwroot
+# Copy built frontend
 COPY --from=frontend-builder /app/dist ./wwwroot
 
 # Fix permissions
@@ -94,25 +93,27 @@ EXPOSE 5000
 
 # Environment variables
 ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="/usr/share/dotnet:/usr/bin:${PATH}"
+ENV PATH="/usr/share/dotnet:/usr/bin:/opt/venv/bin:${PATH}"
 ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="/opt/venv/bin:${PATH}"
 ENV SJ_SIMULATION=true
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
+# Create startup script
+RUN printf '#!/bin/sh\n' \
+    'echo "Starting rshioaji..."\n' \
+    '/opt/venv/bin/shioaji server start &\n' \
+    'SHIOAJI_PID=$!\n' \
+    'sleep 10\n' \
+    'echo "Starting API..."\n' \
+    '$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &\n' \
+    'API_PID=$!\n' \
+    'trap "kill $SHIOAJI_PID $API_PID 2>/dev/null" EXIT\n' \
+    'wait $API_PID\n' > /app/start.sh && chmod +x /app/start.sh
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:5000/health
 
-# Startup script - use venv's python for rshioaji
-ENTRYPOINT /bin/sh -c '
-    echo "Starting rshioaji..." && \
-    /opt/venv/bin/shioaji server start & \
-    SHIOAJI_PID=$! && \
-    sleep 10 && \
-    echo "Starting API..." && \
-    $DOTNET_ROOT/dotnet ShioajiTrader.Api.dll & \
-    API_PID=$! && \
-    trap "kill $SHIOAJI_PID $API_PID 2>/dev/null" EXIT && \
-    wait $API_PID'
+# Use startup script
+ENTRYPOINT ["/app/start.sh"]
