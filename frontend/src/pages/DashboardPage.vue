@@ -228,10 +228,30 @@ const searchStock = async () => {
   error.value = ''
   
   try {
+    // Fetch stock quote
     const response = await api.getQuote(searchCode.value.trim().toUpperCase())
     if (response.data.success) {
       currentStock.value = response.data.data
-      chartData.value = []
+      
+      // Fetch K-line data for chart
+      try {
+        const kbarsResponse = await api.getKbars(searchCode.value.trim().toUpperCase())
+        if (kbarsResponse.data?.data?.kbars) {
+          // Transform kbars data to chart format
+          chartData.value = kbarsResponse.data.data.kbars.map(d => ({
+            time: d.date,
+            open: parseFloat(d.open),
+            high: parseFloat(d.high),
+            low: parseFloat(d.low),
+            close: parseFloat(d.close),
+            volume: parseInt(d.volume)
+          }))
+        }
+      } catch (kbErr) {
+        console.error('Failed to fetch kbars:', kbErr)
+        chartData.value = []
+      }
+      
       subscribeToStream(searchCode.value.trim().toUpperCase())
     } else {
       error.value = response.data.message || '找不到股票'
