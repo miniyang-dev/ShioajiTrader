@@ -83,17 +83,19 @@ WORKDIR /app
 
 EXPOSE 5000
 
-# Environment variables for simulation mode
+# Environment variables
+# CRITICAL: DOTNET_ROOT must point to where .NET is installed
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="/usr/share/dotnet:/usr/bin:${PATH}"
 ENV SJ_SIMULATION=true
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV PATH="/usr/bin:${PATH}"
 
 # Health check (longer start-period for first install)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Startup script
+# Startup script - use $DOTNET_ROOT/dotnet to ensure correct path
 ENTRYPOINT ["/bin/bash", "-c", "\
     echo 'Starting rshioaji server...' && \
     shioaji server start & \
@@ -101,7 +103,7 @@ ENTRYPOINT ["/bin/bash", "-c", "\
     echo 'Waiting for rshioaji (PID: $SHIOAJI_PID)...' && \
     sleep 10 && \
     echo 'Starting ShioajiTrader API...' && \
-    /usr/bin/dotnet ShioajiTrader.Api.dll & \
+    $DOTNET_ROOT/dotnet ShioajiTrader.Api.dll & \
     API_PID=$! && \
     trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT && \
     wait $API_PID"]
