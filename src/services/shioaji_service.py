@@ -140,7 +140,7 @@ class ShioajiService:
             "message": "Order recorded (simulation mode)"
         }
     
-    def subscribe_ticks(self, codes: List[str]) -> AsyncGenerator[dict, None]:
+    async def subscribe_ticks(self, codes: List[str]) -> AsyncGenerator[dict, None]:
         """Subscribe to real-time tick data"""
         if not self._connected:
             self.connect()
