@@ -43,12 +43,11 @@ FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (without pip, we'll use venv)
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
     python3-full \
-    python3-pip \
     python3-venv \
     libgomp1 \
     libssl3 \
@@ -56,11 +55,12 @@ RUN apt-get update && apt-get install -y \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip to latest (required for PEP 668 compatibility)
-RUN pip3 install --upgrade pip --break-system-packages
+# Create virtual environment for Python packages
+RUN python3 -m venv /opt/venv
 
-# Install rshioaji
-RUN pip3 install --no-cache-dir rshioaji
+# Install rshioaji in venv (no --break-system-packages needed)
+RUN /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install rshioaji
 
 # Download and install .NET 8 Runtime + ASP.NET Core Runtime
 # Both are required for ASP.NET Core Web API
@@ -71,9 +71,6 @@ RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-
     tar zxf aspnetcore-runtime-8.0.0-linux-x64.tar.gz -C /usr/share/dotnet && \
     ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet && \
     rm *.tar.gz
-
-# Install rshioaji (required for Shioaji API)
-RUN pip3 install --no-cache-dir rshioaji
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser
@@ -98,6 +95,8 @@ EXPOSE 5000
 # Environment variables
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="/usr/share/dotnet:/usr/bin:${PATH}"
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
 ENV SJ_SIMULATION=true
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
@@ -106,10 +105,10 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Startup script
+# Startup script - use venv's python for rshioaji
 ENTRYPOINT ["/bin/bash", "-c", "\
     echo 'Starting rshioaji server...' && \
-    shioaji server start & \
+    /opt/venv/bin/shioaji server start & \
     SHIOAJI_PID=$! && \
     echo 'Waiting for rshioaji (PID: $SHIOAJI_PID)...' && \
     sleep 10 && \
