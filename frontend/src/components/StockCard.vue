@@ -1,66 +1,46 @@
 <template>
-  <div class="glass-card p-4 hover:border-purple-500/50 transition-colors cursor-pointer">
-    <div class="flex justify-between items-start mb-2">
+  <div 
+    class="bg-slate-800/50 backdrop-blur rounded-2xl p-5 border border-slate-700/30 cursor-pointer hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10"
+    @click="$emit('click')"
+  >
+    <div class="flex items-center justify-between mb-3">
       <div>
-        <h3 class="text-lg font-bold text-white">{{ stock.code }}</h3>
-        <p class="text-sm text-gray-400">{{ stock.name || stock.code }}</p>
+        <h4 class="text-xl font-bold text-white">{{ stock.code }}</h4>
+        <p class="text-slate-400 text-sm">{{ stock.name }}</p>
+      </div>
+      <button 
+        @click.stop="$emit('remove')"
+        class="text-slate-500 hover:text-red-400 transition-colors p-1"
+        title="移除"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="flex items-end justify-between">
+      <div class="text-2xl font-bold" :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'">
+        {{ stock.currentPrice }}
       </div>
       <div class="text-right">
-        <p class="text-xl font-bold" :class="priceColorClass">
-          {{ formatPrice(stock.currentPrice || stock.price) }}
-        </p>
-        <p class="text-sm" :class="changeClass">
-          {{ formatChange(stock.change, stock.changePercent) }}
-        </p>
+        <div class="text-sm" :class="stock.change >= 0 ? 'text-green-400' : 'text-red-400'">
+          {{ stock.change >= 0 ? '+' : '' }}{{ stock.change }}
+        </div>
+        <div class="text-xs" :class="stock.change >= 0 ? 'text-green-400/70' : 'text-red-400/70'">
+          {{ stock.changePercent }}%
+        </div>
       </div>
-    </div>
-    <div class="flex justify-between text-xs text-gray-500 mt-3">
-      <span>成交量: {{ formatVolume(stock.volume) }}</span>
-      <span>{{ formatTime(stock.updatedAt) }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
+defineProps({
   stock: {
     type: Object,
     required: true
   }
 })
 
-const isUp = computed(() => (props.stock.change || 0) >= 0)
-
-const priceColorClass = computed(() => 
-  isUp.value ? 'text-green-500' : 'text-red-500'
-)
-
-const changeClass = computed(() => 
-  isUp.value ? 'text-green-500' : 'text-red-500'
-)
-
-const formatPrice = (price) => {
-  if (!price && price !== 0) return '-'
-  return price.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-const formatChange = (change, percent) => {
-  if ((!change && change !== 0) || (!percent && percent !== 0)) return '-'
-  const sign = change >= 0 ? '+' : ''
-  return `${sign}${change.toFixed(2)} (${sign}${percent.toFixed(2)}%)`
-}
-
-const formatVolume = (volume) => {
-  if (!volume) return '-'
-  if (volume >= 1000000) return (volume / 1000000).toFixed(2) + 'M'
-  if (volume >= 1000) return (volume / 1000).toFixed(2) + 'K'
-  return volume.toString()
-}
-
-const formatTime = (time) => {
-  if (!time) return '-'
-  return new Date(time).toLocaleTimeString('zh-TW')
-}
+defineEmits(['click', 'remove'])
 </script>

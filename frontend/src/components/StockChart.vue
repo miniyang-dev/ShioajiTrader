@@ -1,21 +1,14 @@
 <template>
-  <div class="chart-container">
-    <div ref="chartContainer" class="w-full h-96"></div>
-    <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-deep-sea/50">
-      <div class="skeleton w-full h-full rounded-lg"></div>
-    </div>
+  <div class="chart-wrapper">
+    <div ref="chartContainer" class="w-full h-80"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { createChart } from 'lightweight-charts'
 
 const props = defineProps({
-  symbol: {
-    type: String,
-    required: true
-  },
   data: {
     type: Array,
     default: () => []
@@ -23,56 +16,69 @@ const props = defineProps({
 })
 
 const chartContainer = ref(null)
-const loading = ref(false)
 let chart = null
-let candleSeries = null
+let candlestickSeries = null
 let volumeSeries = null
+
+onMounted(() => {
+  if (chartContainer.value && props.data.length > 0) {
+    initChart()
+  }
+})
+
+watch(() => props.data, (newData) => {
+  if (newData.length > 0) {
+    if (chart) {
+      updateChart()
+    } else {
+      initChart()
+    }
+  }
+}, { deep: true })
 
 const initChart = () => {
   if (!chartContainer.value) return
 
   chart = createChart(chartContainer.value, {
     layout: {
-      background: { type: 'solid', color: '#0d1117' },
-      textColor: '#e6e6e6',
+      background: { type: 'solid', color: 'transparent' },
+      textColor: '#94a3b8',
     },
     grid: {
-      vertLines: { color: '#1a1f26' },
-      horzLines: { color: '#1a1f26' },
+      vertLines: { color: '#334155' },
+      horzLines: { color: '#334155' },
     },
     crosshair: {
       mode: 1,
       vertLine: {
-        color: '#6c5ce7',
-        width: 1,
-        style: 2,
+        color: '#6366f1',
+        labelBackgroundColor: '#6366f1',
       },
       horzLine: {
-        color: '#6c5ce7',
-        width: 1,
-        style: 2,
+        color: '#6366f1',
+        labelBackgroundColor: '#6366f1',
       },
     },
     rightPriceScale: {
-      borderColor: '#30363d',
+      borderColor: '#334155',
     },
     timeScale: {
-      borderColor: '#30363d',
+      borderColor: '#334155',
       timeVisible: true,
     },
   })
 
-  candleSeries = chart.addCandlestickSeries({
-    upColor: '#00b894',
-    downColor: '#ff6b6b',
-    borderUpColor: '#00b894',
-    borderDownColor: '#ff6b6b',
-    wickUpColor: '#00b894',
-    wickDownColor: '#ff6b6b',
+  candlestickSeries = chart.addCandlestickSeries({
+    upColor: '#22c55e',
+    downColor: '#ef4444',
+    borderUpColor: '#22c55e',
+    borderDownColor: '#ef4444',
+    wickUpColor: '#22c55e',
+    wickDownColor: '#ef4444',
   })
 
   volumeSeries = chart.addHistogramSeries({
-    color: '#6c5ce7',
+    color: '#6366f1',
     priceFormat: {
       type: 'volume',
     },
@@ -86,60 +92,43 @@ const initChart = () => {
     },
   })
 
-  // Responsive resize
-  const resizeObserver = new ResizeObserver((entries) => {
-    if (chart && entries[0]) {
-      const { width, height } = entries[0].contentRect
-      chart.applyOptions({ width, height })
+  updateChart()
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    if (chart && chartContainer.value) {
+      chart.applyOptions({ width: chartContainer.value.clientWidth })
     }
   })
-
-  resizeObserver.observe(chartContainer.value)
 }
 
-const updateData = (data) => {
-  if (!candleSeries || !volumeSeries || !data.length) return
+const updateChart = () => {
+  if (!candlestickSeries || !volumeSeries || !props.data.length) return
 
-  const candleData = data.map(d => ({
-    time: d.time || d.date,
+  const candleData = props.data.map(d => ({
+    time: d.time,
     open: d.open,
     high: d.high,
     low: d.low,
-    close: d.close,
+    close: d.close
   }))
 
-  const volumeData = data.map(d => ({
-    time: d.time || d.date,
+  const volumeData = props.data.map(d => ({
+    time: d.time,
     value: d.volume,
-    color: d.close >= d.open ? 'rgba(0, 184, 148, 0.5)' : 'rgba(255, 107, 107, 0.5)',
+    color: d.close >= d.open ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
   }))
 
-  candleSeries.setData(candleData)
+  candlestickSeries.setData(candleData)
   volumeSeries.setData(volumeData)
+
   chart.timeScale().fitContent()
 }
-
-onMounted(() => {
-  initChart()
-  if (props.data.length) {
-    updateData(props.data)
-  }
-})
-
-watch(() => props.data, updateData, { deep: true })
-
-onUnmounted(() => {
-  if (chart) {
-    chart.remove()
-    chart = null
-  }
-})
 </script>
 
 <style scoped>
-.chart-container {
-  position: relative;
+.chart-wrapper {
   width: 100%;
-  min-height: 400px;
+  overflow: hidden;
 }
 </style>
