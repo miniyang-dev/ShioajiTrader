@@ -106,14 +106,13 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Startup script - use venv's python for rshioaji
-ENTRYPOINT ["/bin/bash", "-c", "\
-    echo 'Starting rshioaji server...' && \
+ENTRYPOINT /bin/sh -c '
+    echo "Starting rshioaji..." && \
     /opt/venv/bin/shioaji server start & \
     SHIOAJI_PID=$! && \
-    echo 'Waiting for rshioaji (PID: $SHIOAJI_PID)...' && \
     sleep 10 && \
-    echo 'Starting ShioajiTrader API...' && \
+    echo "Starting API..." && \
     $DOTNET_ROOT/dotnet ShioajiTrader.Api.dll & \
     API_PID=$! && \
-    trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT && \
-    wait $API_PID"]
+    trap "kill $SHIOAJI_PID $API_PID 2>/dev/null" EXIT && \
+    wait $API_PID'
