@@ -106,7 +106,19 @@ RUN mkdir -p /app/src.data/.shioaji && \
     fi
 
 # Create startup script
-RUN printf "#!/bin/sh\necho 'Starting rshioaji server on port 8082...'\n/opt/venv/bin/shioaji server start &\nSHIOAJI_PID=$!\nsleep 10\necho 'Starting .NET API...'\n$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &\nAPI_PID=$!\ntrap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT\nwait $API_PID\n" > /app/start.sh && chmod +x /app/start.sh
+RUN cat > /app/start.sh << 'SCRIPT'
+#!/bin/sh
+echo 'Starting rshioaji server...'
+/opt/venv/bin/shioaji server start &
+SHIOAJI_PID=$!
+sleep 10
+echo 'Starting .NET API...'
+$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &
+API_PID=$!
+trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT
+wait $API_PID
+SCRIPT
+RUN chmod +x /app/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
