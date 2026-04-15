@@ -60,7 +60,7 @@ async def get_quote(code: str, request: Request):
         return QuoteResponse(success=False, message=f"查詢失敗: {str(e)}", code=500)
 
 @router.get("/{code}/kbars")
-async def get_kbars(code: str, days: int = 30, request: Request):
+async def get_kbars(code: str, request: Request, days: int = 30):
     """
     Get historical K-bar data
     """
