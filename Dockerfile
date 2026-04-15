@@ -85,28 +85,25 @@ WORKDIR /app
 
 EXPOSE 5000
 
-# Default environment variables for simulation mode
+# Environment variables for simulation mode
 ENV SJ_SIMULATION=true
 ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV Shioaji__BaseUrl=http://localhost:8080
-ENV PATH="/opt/dotnet:${PATH}"
+ENV PATH="/usr/bin:${PATH}"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Startup script
-# Note: SJ_API_KEY and SJ_API_SECRET must be set in Zeabur environment variables
 ENTRYPOINT ["/bin/bash", "-c", "\
     echo 'Starting rshioaji server...' && \
-    export PATH=\"/opt/dotnet:${PATH}\" && \
     shioaji server start & \
     SHIOAJI_PID=$! && \
     echo 'Waiting for rshioaji (PID: $SHIOAJI_PID)...' && \
     sleep 10 && \
     echo 'Starting ShioajiTrader API...' && \
-    /opt/dotnet/dotnet ShioajiTrader.Api.dll & \
+    /usr/bin/dotnet ShioajiTrader.Api.dll & \
     API_PID=$! && \
     trap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT && \
     wait $API_PID"]
