@@ -1,9 +1,6 @@
 # ================================================
 # ShioajiTrader - Python FastAPI Backend
 # ================================================
-# Build: docker build -t shioajitrader .
-# Run:   docker run -d -p 8080:8080 --name shioajitrader shioajitrader
-# ================================================
 
 # Stage 1: Build Frontend
 FROM node:20-alpine AS frontend-builder
@@ -22,27 +19,25 @@ FROM python:3.11-slim AS backend
 
 WORKDIR /app
 
-# Install system dependencies for shioaji (Rust + OpenSSL)
+# Install system dependencies for shioaji (Rust compiled)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
         wget \
-        git \
         build-essential \
         libgomp1 \
         libssl3 \
         libicu-dev \
         pkg-config \
+        libffi-dev \
+        libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Copy requirements
 COPY src/requirements.txt .
 
-# Install uv for faster package installation
-RUN pip install --no-cache-dir uv
-
-# Install Python dependencies using uv (more reliable)
-RUN uv pip install --system -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ .
@@ -53,7 +48,7 @@ FROM python:3.11-slim AS runtime
 
 WORKDIR /app
 
-# Install minimal system dependencies for shioaji
+# Install minimal runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -62,7 +57,7 @@ RUN apt-get update && \
         libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
+# Copy installed Python packages from builder
 COPY --from=backend /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=backend /usr/local/bin /usr/local/bin
 
@@ -79,13 +74,9 @@ RUN mkdir -p /app/src.data
 ENV PYTHONUNBUFFERED=1
 ENV DATA_PATH=/app/src.data
 ENV SJ_SIMULATION=true
-ENV PORT=8080
-
-# Expose port
-EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Run with uvicorn
