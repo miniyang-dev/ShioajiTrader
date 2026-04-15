@@ -57,7 +57,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip to latest (required for PEP 668 compatibility)
-RUN pip3 install --upgrade pip
+RUN pip3 install --upgrade pip --break-system-packages
 
 # Install rshioaji
 RUN pip3 install --no-cache-dir rshioaji
