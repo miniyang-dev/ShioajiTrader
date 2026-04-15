@@ -47,7 +47,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
-    python3 \
+    python3-full \
     python3-pip \
     python3-venv \
     libgomp1 \
@@ -55,6 +55,12 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     openssl \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip to latest (required for PEP 668 compatibility)
+RUN pip3 install --upgrade pip
+
+# Install rshioaji
+RUN pip3 install --no-cache-dir rshioaji
 
 # Download and install .NET 8 Runtime + ASP.NET Core Runtime
 # Both are required for ASP.NET Core Web API
@@ -67,7 +73,7 @@ RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-
     rm *.tar.gz
 
 # Install rshioaji (required for Shioaji API)
-RUN pip3 install --no-cache-dir --break-system-packages rshioaji
+RUN pip3 install --no-cache-dir rshioaji
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser
