@@ -64,21 +64,12 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(stocks_router, prefix="/api/stocks", tags=["Stocks"])
 app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
 
-# Static files and SPA fallback
+# Static files - serve Vue frontend
 frontend_path = Path("/app/wwwroot")
 if frontend_path.exists():
-    # Mount assets at /assets to match frontend references
-    app.mount("/assets", StaticFiles(directory=str(frontend_path / "assets")), name="assets")
-    # Also mount root index.html directly
-    app.mount("/", StaticFiles(directory=str(frontend_path)), name="frontend")
-
-@app.get("/")
-async def root():
-    """Serve frontend index.html"""
-    index_path = frontend_path / "index.html"
-    if index_path.exists():
-        return FileResponse(str(index_path))
-    return {"message": "ShioajiTrader API", "status": "running"}
+    # Mount at / with html=True for SPA fallback
+    # All non-API routes will fall back to index.html
+    app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
 
 @app.get("/health")
 async def health_check():
