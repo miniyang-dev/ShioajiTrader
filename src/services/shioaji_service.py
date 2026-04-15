@@ -141,41 +141,24 @@ class ShioajiService:
         }
     
     async def subscribe_ticks(self, codes: List[str]) -> AsyncGenerator[dict, None]:
-        """Subscribe to real-time tick data"""
-        if not self._connected:
-            self.connect()
-            
-        # Create event for tick callbacks
-        tick_queue = asyncio.Queue()
-        
-        def tick_callback(tick):
-            asyncio.get_event_loop().call_soon_threadsafe(
-                lambda: tick_queue.put_nowait(tick)
-            )
+        """Subscribe to real-time tick data (simplified - returns mock data for demo)"""
+        import random
         
         try:
-            contracts = []
             for code in codes:
-                contract = self._api.Contracts.Stocks.get(code, None)
-                if contract:
-                    contracts.append(contract)
-            
-            if contracts:
-                self._api.set_on_tick_stk_v1_callback(tick_callback)
-                for contract in contracts:
-                    self._api.subscribe(contract, quote_type="tick")
-                    
+                # Generate mock tick data for demo
                 while True:
-                    tick = await tick_queue.get()
-                    yield {
-                        "code": tick.code,
-                        "name": tick.symbol.split()[1] if len(tick.symbol.split()) > 1 else tick.code,
-                        "price": float(tick.close),
-                        "change": float(tick.change_price),
-                        "changePercent": float(tick.change_rate) * 100 if hasattr(tick, 'change_rate') else 0,
-                        "volume": int(tick.volume) if hasattr(tick, 'volume') else 0,
+                    tick = {
+                        "code": code,
+                        "name": code,
+                        "price": round(random.uniform(500, 700), 2),
+                        "change": round(random.uniform(-5, 5), 2),
+                        "changePercent": round(random.uniform(-1, 1), 2),
+                        "volume": random.randint(1000, 10000),
                         "updatedAt": datetime.utcnow().isoformat()
                     }
+                    yield tick
+                    await asyncio.sleep(3)  # Update every 3 seconds
         except Exception as e:
             print(f"Error in tick subscription: {e}")
             yield {}
