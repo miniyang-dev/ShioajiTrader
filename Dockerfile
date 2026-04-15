@@ -43,7 +43,7 @@ FROM ubuntu:24.04 AS runtime
 
 WORKDIR /app
 
-# Install .NET Runtime and dependencies
+# Install dependencies and .NET Runtime directly (not via deb)
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -53,14 +53,12 @@ RUN apt-get update && apt-get install -y \
     libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install .NET 8 Runtime from Microsoft
-RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
-    dpkg -i /tmp/packages-microsoft-prod.deb && \
-    rm /tmp/packages-microsoft-prod.deb && \
-    apt-get update && \
-    apt-get install -y dotnet-runtime-8.0 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Download and install .NET 8 Runtime to standard location
+RUN wget -q https://dotnetcli.azureedge.net/dotnet/Runtime/8.0.0/dotnet-runtime-8.0.0-linux-x64.tar.gz && \
+    mkdir -p /usr/share/dotnet && \
+    tar zxf dotnet-runtime-8.0.0-linux-x64.tar.gz -C /usr/share/dotnet && \
+    ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet && \
+    rm dotnet-runtime-8.0.0-linux-x64.tar.gz
 
 # Install rshioaji
 RUN pip3 install --no-cache-dir --break-system-packages rshioaji
@@ -91,8 +89,8 @@ ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV PATH="/usr/bin:${PATH}"
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# Health check (longer start-period for first install)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Startup script
