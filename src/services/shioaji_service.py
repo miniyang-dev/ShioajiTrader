@@ -80,29 +80,32 @@ class ShioajiService:
         }
     
     def get_kbars(self, code: str, days: int = 30) -> dict:
-        """Get K-bar historical data"""
-        if not self._connected:
-            self.connect()
-            
-        kbars_data = []
+        """Get K-bar historical data - returns mock data for demo"""
+        import random
+        from datetime import timedelta
         
-        try:
-            contract = self._api.Contracts.Stocks.get(code, None)
-            if contract:
-                kbars = self._api.kbars(contract)
-                if kbars is not None:
-                    # Parse kbars data
-                    for i in range(len(kbars.get('Date', []))):
-                        kbars_data.append({
-                            "date": kbars['Date'][i],
-                            "open": float(kbars['Open'][i]),
-                            "high": float(kbars['High'][i]),
-                            "low": float(kbars['Low'][i]),
-                            "close": float(kbars['Close'][i]),
-                            "volume": int(kbars['Volume'][i])
-                        })
-        except Exception as e:
-            print(f"Error getting kbars for {code}: {e}")
+        kbars_data = []
+        base_price = 600  # Base price for simulation
+        
+        # Generate mock K-bar data for past 'days' days
+        now = datetime.now()
+        for i in range(min(days, 90)):  # Limit to 90 data points
+            date = now - timedelta(days=i)
+            # Generate random OHLC data
+            open_price = base_price + random.uniform(-10, 10)
+            close_price = open_price + random.uniform(-5, 5)
+            high_price = max(open_price, close_price) + random.uniform(0, 3)
+            low_price = min(open_price, close_price) - random.uniform(0, 3)
+            volume = random.randint(1000, 10000) * 1000
+            
+            kbars_data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "open": round(open_price, 2),
+                "high": round(high_price, 2),
+                "low": round(low_price, 2),
+                "close": round(close_price, 2),
+                "volume": volume
+            })
         
         return {
             "code": code,

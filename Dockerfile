@@ -19,16 +19,14 @@ FROM python:3.11-slim AS backend
 
 WORKDIR /app
 
-# Install system dependencies for shioaji (Rust compiled)
+# Install system dependencies for shioaji
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
-        wget \
         build-essential \
         libgomp1 \
         libssl3 \
         libicu-dev \
-        pkg-config \
         libffi-dev \
         libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
