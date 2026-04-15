@@ -89,14 +89,14 @@ RUN chown -R appuser:appuser /app
 USER appuser
 WORKDIR /app
 
-EXPOSE 8080
+EXPOSE 8081
 
 # Environment variables
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="/usr/share/dotnet:/usr/bin:/opt/venv/bin:${PATH}"
 ENV VIRTUAL_ENV=/opt/venv
 ENV SJ_SIMULATION=true
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS=http://+:8081
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Create startup script
@@ -104,7 +104,7 @@ RUN printf "#!/bin/sh\necho 'Starting rshioaji...'\n/opt/venv/bin/shioaji server
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/health
+    CMD curl -f http://localhost:8081/health
 
 # Use startup script
 ENTRYPOINT ["/app/start.sh"]
