@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from api.auth import router as auth_router
 from api.stocks import router as stocks_router
 from api.orders import router as orders_router
+from api.users import router as users_router
 from services.shioaji_service import ShioajiService
 
 # Data directory
@@ -63,6 +64,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(stocks_router, prefix="/api/stocks", tags=["Stocks"])
 app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
+app.include_router(users_router, prefix="/api/users", tags=["Users"])
 
 # Static files - serve Vue frontend assets
 frontend_path = Path("/app/wwwroot")

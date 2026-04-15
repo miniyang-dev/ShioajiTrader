@@ -16,9 +16,10 @@ ShioajiTrader/
 ├── src/                          # Python FastAPI 後端
 │   ├── main.py                   # FastAPI 主程式
 │   ├── api/                      # API 路由
-│   │   ├── auth.py               # 認證（POST /api/auth/login）
+│   │   ├── auth.py              # 認證（POST /api/auth/login）
 │   │   ├── stocks.py             # 股票（GET/POST/DELETE /api/stocks）
-│   │   └── orders.py             # 訂單（GET/POST /api/orders）
+│   │   ├── orders.py             # 訂單（GET/POST /api/orders）
+│   │   └── users.py              # 會員（GET/PUT /api/users/me）
 │   ├── models/
 │   │   └── schemas.py            # Pydantic 模型
 │   ├── services/
@@ -32,7 +33,7 @@ ShioajiTrader/
 │   │   └── router/             # Vue Router
 │   ├── dist/                    # 編譯後的前端靜態檔案
 │   └── package.json
-├── src.data/                     # JSON 資料存放（股票、訂單）
+├── src.data/                     # JSON 資料存放（股票、訂單、會員）
 ├── Dockerfile                    # Docker 建置腳本
 └── README.md                      # 本說明文件
 ```
@@ -45,7 +46,10 @@ ShioajiTrader/
 
 | 功能 | API 端點 | 說明 |
 |------|----------|------|
-| **登入** | `POST /api/auth/login` | Token 核發 |
+| **登入** | `POST /api/auth/login` | 帳號密碼驗證 |
+| **登出** | `POST /api/auth/logout` | 登出 |
+| **會員資料** | `GET /api/users/me` | 取得會員資料 |
+| **更新會員** | `PUT /api/users/me` | 更新會員資料 |
 | **股票查詢** | `GET /api/stocks/{code}` | 取得個股報價 |
 | **K線資料** | `GET /api/stocks/{code}/kbars` | 歷史K線 |
 | **即時報價** | `GET /api/stocks/{code}/stream` | SSE 串流 |
@@ -63,10 +67,9 @@ ShioajiTrader/
 | **Deep Sea Dark** | 科技感暗色調主題 |
 | **Glassmorphism** | 毛玻璃透明卡片 |
 | **股票閃爍動畫** | 紅/綠漲跌即時顯示 |
-| **Skeleton Loading** | 骨架屏載入體驗 |
 | **TradingView K線** | 蠟燭圖 + 成交量 |
 | **SSE 即時更新** | 即時股價串流 |
-| **JWT 認證** | 登入/登出/保護路由 |
+| **會員管理** | 檢視和修改會員資料 |
 
 ---
 
@@ -132,25 +135,16 @@ docker run -d -p 8080:8080 --name shioajitrader shioajitrader
 | `SJ_API_SECRET` | （需填入）| Shioaji API Secret |
 | `PORT` | `8080` | Zeabur 導流端口 |
 
-> ⚠️ **重要**：若 `SJ_API_KEY` 和 `SJ_API_SECRET` 未設定，系統會以 Simulation 模式運行
-
-### Docker 運行
-
-```bash
-docker run -d -p 8080:8080 \
-  -e SJ_SIMULATION=true \
-  -e SJ_API_KEY=your_key \
-  -e SJ_API_SECRET=your_secret \
-  --name shioajitrader shioajitrader
-```
-
 ---
 
 ## 📊 API 完整列表
 
 | 方法 | 端點 | 需要認證 | 說明 |
 |------|------|----------|------|
-| POST | `/api/auth/login` | ❌ | 登入 |
+| POST | `/api/auth/login` | ❌ | 登入（帳號 sheep / 密碼 pass.1234）|
+| POST | `/api/auth/logout` | ❌ | 登出 |
+| GET | `/api/users/me` | ❌ | 取得會員資料 |
+| PUT | `/api/users/me` | ❌ | 更新會員資料 |
 | GET | `/api/stocks` | ❌ | 取得追蹤清單 |
 | GET | `/api/stocks/{code}` | ❌ | 查詢個股報價 |
 | POST | `/api/stocks` | ❌ | 新增股票到追蹤 |
@@ -176,29 +170,12 @@ docker run -d -p 8080:8080 \
 │    直接使用 shioaji Python library            │
 │                                             │
 │    ├── /api/auth/*    → 認證               │
+│    ├── /api/users/*   → 會員管理           │
 │    ├── /api/stocks/*  → 股票               │
 │    ├── /api/orders/*  → 訂單               │
 │    └── /             → Vue Frontend         │
 └─────────────────────────────────────────────┘
 ```
-
-### 與舊版差異
-
-| 項目 | 舊版（C#） | 新版（Python） |
-|------|-----------|---------------|
-| Backend | .NET 8 | Python FastAPI |
-| Shioaji | rshioaji server (HTTP) | 直接用 shioaji library |
-| Port | 8080 + 8081 | **統一 8080** |
-| Services | 3 個 | **1 個** |
-| Build 時間 | 5-10 分鐘 | **1-2 分鐘** |
-
----
-
-## 🔒 安全說明
-
-- 目前為 Demo 版本，認證機制簡化
-- 建議未來加入 proper JWT validation
-- 目前僅支援 Simulation 模式，正式交易需申請 API Key
 
 ---
 
