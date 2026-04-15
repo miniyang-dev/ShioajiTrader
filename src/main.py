@@ -67,7 +67,10 @@ app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
 # Static files and SPA fallback
 frontend_path = Path("/app/wwwroot")
 if frontend_path.exists():
-    app.mount("/static", StaticFiles(directory=str(frontend_path / "assets")), name="static")
+    # Mount assets at /assets to match frontend references
+    app.mount("/assets", StaticFiles(directory=str(frontend_path / "assets")), name="assets")
+    # Also mount root index.html directly
+    app.mount("/", StaticFiles(directory=str(frontend_path)), name="frontend")
 
 @app.get("/")
 async def root():
