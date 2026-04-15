@@ -100,16 +100,7 @@ ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Create startup script
-RUN printf '#!/bin/sh\n' \
-    'echo "Starting rshioaji..."\n' \
-    '/opt/venv/bin/shioaji server start &\n' \
-    'SHIOAJI_PID=$!\n' \
-    'sleep 10\n' \
-    'echo "Starting API..."\n' \
-    '$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &\n' \
-    'API_PID=$!\n' \
-    'trap "kill $SHIOAJI_PID $API_PID 2>/dev/null" EXIT\n' \
-    'wait $API_PID\n' > /app/start.sh && chmod +x /app/start.sh
+RUN printf "#!/bin/sh\necho 'Starting rshioaji...'\n/opt/venv/bin/shioaji server start &\nSHIOAJI_PID=$!\nsleep 10\necho 'Starting API...'\n$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &\nAPI_PID=$!\ntrap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT\nwait $API_PID\n" > /app/start.sh && chmod +x /app/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
