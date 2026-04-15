@@ -89,22 +89,28 @@ RUN chown -R appuser:appuser /app
 USER appuser
 WORKDIR /app
 
-EXPOSE 8081
+EXPOSE 8080
 
 # Environment variables
 ENV DOTNET_ROOT=/usr/share/dotnet
 ENV PATH="/usr/share/dotnet:/usr/bin:/opt/venv/bin:${PATH}"
 ENV VIRTUAL_ENV=/opt/venv
 ENV SJ_SIMULATION=true
-ENV ASPNETCORE_URLS=http://+:8081
+ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Link rshioaji cache to persistent storage
+RUN mkdir -p /app/src.data/.shioaji && \
+    if [ ! -e /home/appuser/.shioaji ]; then \
+        ln -s /app/src.data/.shioaji /home/appuser/.shioaji; \
+    fi
 
 # Create startup script
 RUN printf "#!/bin/sh\necho 'Starting rshioaji...'\n/opt/venv/bin/shioaji server start &\nSHIOAJI_PID=$!\nsleep 10\necho 'Starting API...'\n$DOTNET_ROOT/dotnet ShioajiTrader.Api.dll &\nAPI_PID=$!\ntrap 'kill $SHIOAJI_PID $API_PID 2>/dev/null' EXIT\nwait $API_PID\n" > /app/start.sh && chmod +x /app/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8081/health
+    CMD curl -f http://localhost:8080/health
 
 # Use startup script
 ENTRYPOINT ["/app/start.sh"]
