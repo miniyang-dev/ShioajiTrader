@@ -49,9 +49,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     python3 \
     python3-pip \
+    python3-venv \
     libgomp1 \
     libssl3 \
-    icu-dev \
+    libicu-dev \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install .NET 8 Runtime + ASP.NET Core Runtime
