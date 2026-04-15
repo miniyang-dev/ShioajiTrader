@@ -67,9 +67,18 @@ app.include_router(orders_router, prefix="/api/orders", tags=["Orders"])
 # Static files - serve Vue frontend
 frontend_path = Path("/app/wwwroot")
 if frontend_path.exists():
-    # Mount at / with html=True for SPA fallback
-    # All non-API routes will fall back to index.html
+    # Mount at / for SPA fallback
+    # html=True makes it serve index.html for non-file routes
     app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+
+# SPA fallback - for any non-API route, serve index.html
+@app.get("/{path:path}")
+async def serve_spa(path: str):
+    """Serve Vue SPA for all non-API routes"""
+    index_path = frontend_path / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {"detail": "Not Found"}
 
 @app.get("/health")
 async def health_check():
