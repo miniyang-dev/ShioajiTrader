@@ -3,6 +3,7 @@ Orders Router - Order management endpoints
 """
 import os
 import json
+import logging
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime
@@ -12,6 +13,9 @@ from models.schemas import (
     OrderResponse, OrderListResponse, OrderStatistics,
     OrderSide, OrderType, OrderStatus
 )
+
+# Logger setup
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -30,13 +34,21 @@ def load_orders() -> list:
     ensure_data_dir()
     try:
         return json.loads(ORDERS_FILE.read_text())
-    except:
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse orders file: {e}")
+        return []
+    except IOError as e:
+        logger.error(f"Failed to read orders file: {e}")
         return []
 
 def save_orders(orders: list):
     """Save orders to JSON file"""
     ensure_data_dir()
-    ORDERS_FILE.write_text(json.dumps(orders, indent=2, ensure_ascii=False))
+    try:
+        ORDERS_FILE.write_text(json.dumps(orders, indent=2, ensure_ascii=False))
+    except IOError as e:
+        logger.error(f"Failed to write orders file: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save order data")
 
 def is_valid_stock_code(code: str) -> bool:
     """Validate Taiwan stock code format
