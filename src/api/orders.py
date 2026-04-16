@@ -39,8 +39,24 @@ def save_orders(orders: list):
     ORDERS_FILE.write_text(json.dumps(orders, indent=2, ensure_ascii=False))
 
 def is_valid_stock_code(code: str) -> bool:
-    """Validate Taiwan stock code format (4 digits)"""
-    return bool(code and len(code) == 4 and code.isdigit())
+    """Validate Taiwan stock code format
+    
+    Rules:
+    - 4 digits for common stocks (e.g., 2330)
+    - 6 digits for ETF/indices (e.g., 0050)
+    - Must be all digits
+    """
+    if not code:
+        return False
+    if not code.isdigit():
+        return False
+    # Taiwan stock codes: 4 digits (common) or 6 digits (ETF)
+    if len(code) not in (4, 6):
+        return False
+    # First digit should not be 0 for common stocks
+    if len(code) == 4 and code[0] == '0':
+        return False
+    return True
 
 @router.get("", response_model=OrderListResponse)
 async def get_orders(status: Optional[str] = None):

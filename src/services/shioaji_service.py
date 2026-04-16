@@ -4,10 +4,14 @@ Shioaji Service - Direct integration with shioaji Python library
 import os
 import json
 import asyncio
+import logging
 from pathlib import Path
 from typing import List, Optional, AsyncGenerator
 from datetime import datetime, timedelta
 import random
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class ShioajiService:
     """Direct shioaji Python library wrapper"""
@@ -34,19 +38,19 @@ class ShioajiService:
                     api_key=self.api_key,
                     secret_key=self.api_secret
                 )
-                print("Successfully connected to Shioaji with real credentials")
+                logger.info("Successfully connected to Shioaji with real credentials")
             else:
-                print("No API credentials provided, running in simulation mode")
+                logger.info("No API credentials provided, running in simulation mode")
                 
             self._connected = True
             return True
             
-        except ImportError:
-            print("shioaji not installed, using simulation mode")
+        except ImportError as e:
+            logger.warning(f"shioaji not installed, using simulation mode: {e}")
             self._connected = True
             return True
         except Exception as e:
-            print(f"Failed to connect to Shioaji: {e}")
+            logger.error(f"Failed to connect to Shioaji: {e}")
             self._connected = True  # Continue in simulation mode
             return True
     
@@ -72,7 +76,7 @@ class ShioajiService:
                         "updatedAt": datetime.now().isoformat()
                     }
         except Exception as e:
-            print(f"Error getting quote for {code}: {e}")
+            logger.warning(f"Error getting quote for {code}: {e}")
         
         # Return mock data
         return {
@@ -124,11 +128,11 @@ class ShioajiService:
                             "volume": int(kbars.Volume[i])
                         })
                         
-                print(f"Fetched {len(kbars_data)} kbars for {code}")
+                logger.info(f"Fetched {len(kbars_data)} kbars for {code}")
                 return {"code": code, "kbars": kbars_data}
                     
         except Exception as e:
-            print(f"Error getting kbars for {code}: {e}")
+            logger.warning(f"Error getting kbars for {code}: {e}")
         
         # Return mock data if shioaji fails
         return self._generate_mock_kbars(code, days)
@@ -181,7 +185,7 @@ class ShioajiService:
                     "message": "Order submitted successfully"
                 }
         except Exception as e:
-            print(f"Error placing order: {e}")
+            logger.error(f"Error placing order: {e}")
             
         # Mock response for simulation
         return {
@@ -209,5 +213,5 @@ class ShioajiService:
                     yield tick
                     await asyncio.sleep(3)
         except Exception as e:
-            print(f"Error in tick subscription: {e}")
+            logger.error(f"Error in tick subscription: {e}")
             yield {}

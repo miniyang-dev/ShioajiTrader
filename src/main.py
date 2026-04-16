@@ -3,12 +3,14 @@ ShioajiTrader - Python FastAPI Backend
 """
 import os
 import re
+import time
+from collections import defaultdict
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from api.auth import router as auth_router
 from api.stocks import router as stocks_router
@@ -19,6 +21,39 @@ from services.shioaji_service import ShioajiService
 # Data directory
 DATA_PATH = Path(os.getenv("DATA_PATH", "/app/src.data"))
 DATA_PATH.mkdir(parents=True, exist_ok=True)
+
+# Rate limiting storage
+rate_limit_storage = defaultdict(list)
+RATE_LIMIT_REQUESTS = 100  # requests per window
+RATE_LIMIT_WINDOW = 60  # seconds
+
+
+async def rate_limit_middleware(request: Request, call_next):
+    """Simple rate limiting middleware"""
+    # Skip rate limiting for health checks
+    if request.url.path == "/health":
+        return await call_next(request)
+    
+    client_ip = request.client.host if request.client else "unknown"
+    current_time = time.time()
+    
+    # Clean old requests
+    rate_limit_storage[client_ip] = [
+        t for t in rate_limit_storage[client_ip]
+        if current_time - t < RATE_LIMIT_WINDOW
+    ]
+    
+    # Check rate limit
+    if len(rate_limit_storage[client_ip]) >= RATE_LIMIT_REQUESTS:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please try again later."}
+        )
+    
+    # Add current request
+    rate_limit_storage[client_ip].append(current_time)
+    
+    return await call_next(request)
 
 # Global shioaji service instance
 shioaji_service: ShioajiService = None
@@ -59,6 +94,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
 
 # Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])

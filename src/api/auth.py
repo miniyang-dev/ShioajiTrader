@@ -30,8 +30,19 @@ def ensure_data_dir():
         USERS_FILE.write_text(json.dumps([default_user], indent=2))
 
 def hash_password(password: str) -> str:
-    """Simple password hashing"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password with salt using SHA256"""
+    import secrets
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"{salt}${hashed}"
+
+def verify_password(password: str, stored: str) -> bool:
+    """Verify password against stored hash"""
+    try:
+        salt, hashed = stored.split('$')
+        return hashlib.sha256((salt + password).encode()).hexdigest() == hashed
+    except:
+        return False
 
 def load_users() -> list:
     """Load users from JSON file"""
@@ -72,9 +83,8 @@ async def login(request: LoginRequest):
             code=401
         )
     
-    # Check password
-    hashed_input = hash_password(request.apiSecret)
-    if user.get("password") != hashed_input:
+    # Check password using secure verification
+    if not verify_password(request.apiSecret, user.get("password", "")):
         return LoginResponse(
             success=False,
             message="密碼錯誤",

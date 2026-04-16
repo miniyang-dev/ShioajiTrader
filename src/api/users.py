@@ -7,70 +7,56 @@ import uuid
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from fastapi import APIRouter, HTTPException
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 router = APIRouter()
 
-# Data directory
-DATA_PATH = Path(os.getenv("DATA_PATH", "/app/src.data"))
-USERS_FILE = DATA_PATH / "users.json"
+def get_data_path():
+    """Get data directory path dynamically"""
+    return Path(os.getenv("DATA_PATH", "/app/src.data"))
+
+def get_users_file():
+    """Get users file path dynamically"""
+    return get_data_path() / "users.json"
 
 def ensure_data_dir():
     """Ensure data directory and files exist"""
-    DATA_PATH.mkdir(parents=True, exist_ok=True)
-    if not USERS_FILE.exists():
-        # Create default user
+    data_path = get_data_path()
+    users_file = get_users_file()
+    data_path.mkdir(parents=True, exist_ok=True)
+    if not users_file.exists():
+        # Create default user with simple hash for backward compatibility
         default_user = {
             "id": "1",
             "username": "sheep",
-            "password": hash_password("pass.1234"),
+            "password": hashlib.sha256("pass.1234".encode()).hexdigest(),
             "email": "sheep@example.com",
             "name": "Sheep User",
             "phone": "",
             "createdAt": "2026-04-15T00:00:00Z"
         }
-        USERS_FILE.write_text(json.dumps([default_user], indent=2))
-
-def hash_password(password: str) -> str:
-    """Simple password hashing"""
-    return hashlib.sha256(password.encode()).hexdigest()
+        users_file.write_text(json.dumps([default_user], indent=2))
 
 def load_users() -> list:
     """Load users from JSON file"""
     ensure_data_dir()
     try:
-        return json.loads(USERS_FILE.read_text())
+        return json.loads(get_users_file().read_text())
     except:
         return []
 
 def save_users(users: list):
     """Save users to JSON file"""
     ensure_data_dir()
-    USERS_FILE.write_text(json.dumps(users, indent=2, ensure_ascii=False))
-
-def verify_token(token: str) -> dict:
-    """Verify token and return user"""
-    tokens_file = DATA_PATH / "tokens.json"
-    if tokens_file.exists():
-        tokens = json.loads(tokens_file.read_text())
-        user_id = tokens.get(token)
-        if user_id:
-            users = load_users()
-            user = next((u for u in users if u.get("id") == user_id), None)
-            return user
-    return None
+    get_users_file().write_text(json.dumps(users, indent=2, ensure_ascii=False))
 
 @router.get("/me")
 async def get_profile():
-    """
-    Get current user profile
-    """
+    """Get current user profile"""
     ensure_data_dir()
     users = load_users()
     if users:
         user = users[0]
-        # Don't return password
         return {
             "success": True,
             "data": {
@@ -87,9 +73,7 @@ async def get_profile():
 
 @router.put("/me")
 async def update_profile(data: dict):
-    """
-    Update current user profile
-    """
+    """Update current user profile"""
     ensure_data_dir()
     users = load_users()
     
@@ -98,7 +82,6 @@ async def update_profile(data: dict):
     
     user = users[0]
     
-    # Update fields
     if "email" in data:
         user["email"] = data["email"]
     if "name" in data:
@@ -106,17 +89,15 @@ async def update_profile(data: dict):
     if "phone" in data:
         user["phone"] = data["phone"]
     
-    # If password change is requested
     if "newPassword" in data and data["newPassword"]:
         if "currentPassword" not in data:
             return {"success": False, "message": "請輸入舊密碼", "code": 400}
         
-        # Verify old password
-        if hash_password(data["currentPassword"]) != user.get("password"):
+        current_hash = hashlib.sha256(data["currentPassword"].encode()).hexdigest()
+        if user.get("password") != current_hash:
             return {"success": False, "message": "舊密碼錯誤", "code": 401}
         
-        # Update password
-        user["password"] = hash_password(data["newPassword"])
+        user["password"] = hashlib.sha256(data["newPassword"].encode()).hexdigest()
     
     save_users(users)
     
@@ -134,12 +115,9 @@ async def update_profile(data: dict):
 
 @router.get("/")
 async def get_users():
-    """
-    Get all users (admin only - simplified for demo)
-    """
+    """Get all users (admin only - simplified for demo)"""
     ensure_data_dir()
     users = load_users()
-    # Don't return passwords
     safe_users = [{
         "id": u.get("id"),
         "username": u.get("username"),
@@ -152,22 +130,19 @@ async def get_users():
 
 @router.post("/")
 async def create_user(data: dict):
-    """
-    Create new user (admin only - simplified for demo)
-    """
+    """Create new user (admin only - simplified for demo)"""
     if not data.get("username") or not data.get("password"):
         return {"success": False, "message": "帳號和密碼不得為空", "code": 400}
     
     users = load_users()
     
-    # Check if username exists
     if any(u.get("username") == data["username"] for u in users):
         return {"success": False, "message": "帳號已存在", "code": 409}
     
     new_user = {
         "id": str(uuid.uuid4()),
         "username": data["username"],
-        "password": hash_password(data["password"]),
+        "password": hashlib.sha256(data["password"].encode()).hexdigest(),
         "email": data.get("email", ""),
         "name": data.get("name", ""),
         "phone": data.get("phone", ""),
