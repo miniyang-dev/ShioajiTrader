@@ -3,382 +3,285 @@
     <!-- Header -->
     <header class="header">
       <div class="header-left">
-        <div class="logo">
-          <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-            <rect width="48" height="48" rx="12" fill="url(#logo-grad)"/>
-            <path d="M14 32L24 16L34 32H14Z" fill="white" fill-opacity="0.9"/>
-            <circle cx="24" cy="26" r="4" fill="white" fill-opacity="0.6"/>
-            <defs>
-              <linearGradient id="logo-grad" x1="0" y1="0" x2="48" y2="48">
-                <stop stop-color="#3B82F6"/>
-                <stop offset="1" stop-color="#1D4ED8"/>
-              </linearGradient>
-            </defs>
+        <div class="logo-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M3 3h18v18H3V3z" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 9h18M9 3v18" stroke="currentColor" stroke-width="2"/>
           </svg>
         </div>
-        <div class="header-title">
-          <h1>Dashboard</h1>
-          <span class="timestamp">{{ currentTime }}</span>
-        </div>
+        <span class="logo-text">ShioajiTrader</span>
       </div>
+
       <div class="header-right">
-        <button @click="handleLogout" class="logout-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>Live</span>
+        </div>
+        <div class="time-display">{{ currentTime }}</div>
+        <button class="btn-logout" @click="handleLogout">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M11 11l3-3-3-3M5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Sign out
+          Logout
         </button>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Search Section -->
-      <section class="search-section">
-        <div class="search-card">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              v-model="searchCode"
-              type="text"
-              placeholder="Search stock code (e.g. 2330)"
-              @keyup.enter="searchStock"
-            />
-            <button 
-              v-if="searchCode"
-              @click="searchCode = ''"
-              class="clear-btn"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
+    <!-- Main content -->
+    <div class="main-grid">
+      <!-- Left column -->
+      <div class="left-col">
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card" v-for="stat in stats" :key="stat.label">
+            <div class="stat-label">{{ stat.label }}</div>
+            <div class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+            <div class="stat-delta" :class="stat.direction">
+              <svg v-if="stat.direction === 'up'" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M5 2L9 8H1L5 2Z" fill="currentColor"/>
               </svg>
-            </button>
-          </div>
-          <button 
-            @click="searchStock" 
-            :disabled="loading || !searchCode.trim()"
-            class="search-btn"
-          >
-            <span v-if="loading" class="spinner"></span>
-            <span v-else>Search</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Error Message -->
-      <div v-if="error" class="error-toast">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        {{ error }}
-      </div>
-
-      <!-- Stock Info Grid -->
-      <div v-if="currentStock" class="stock-grid">
-        <!-- Stock Price Card -->
-        <div class="stock-price-card card-hover">
-          <div class="card-label">Current Price</div>
-          <div class="stock-code">{{ currentStock.code }}</div>
-          <div class="stock-name">{{ currentStock.name }}</div>
-          <div class="stock-price" :class="priceColorClass">
-            {{ formatPrice(currentStock.currentPrice) }}
-          </div>
-          <div class="stock-change" :class="priceColorClass">
-            <svg v-if="currentStock.change >= 0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="18 15 12 9 6 15"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-            {{ currentStock.change >= 0 ? '+' : '' }}{{ currentStock.change.toFixed(2) }}
-            ({{ currentStock.changePercent.toFixed(2) }}%)
-          </div>
-        </div>
-
-        <!-- Volume Card -->
-        <div class="stat-card card-hover">
-          <div class="card-label">Volume</div>
-          <div class="stat-value">{{ formatVolume(currentStock.volume) }}</div>
-          <div class="stat-desc">shares</div>
-        </div>
-
-        <!-- Last Update Card -->
-        <div class="stat-card card-hover">
-          <div class="card-label">Last Update</div>
-          <div class="stat-value">{{ formatTime(currentStock.updatedAt) }}</div>
-          <div class="stat-desc">local time</div>
-        </div>
-      </div>
-
-      <!-- Chart Section -->
-      <div v-if="currentStock" class="chart-section">
-        <div class="chart-header">
-          <h3>K-Line Chart</h3>
-          <div class="chart-controls">
-            <button 
-              v-for="period in ['1D', '1W', '1M', '3M']" 
-              :key="period"
-              :class="{ active: selectedPeriod === period }"
-              @click="selectedPeriod = period"
-            >
-              {{ period }}
-            </button>
-          </div>
-        </div>
-        <div class="chart-wrapper">
-          <StockChart v-if="chartData.length > 0" :data="chartData" />
-          <div v-else class="chart-loading">
-            <div class="skeleton-chart"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Watchlist Section -->
-      <section class="watchlist-section">
-        <div class="section-header">
-          <h3>Watchlist</h3>
-          <button @click="showAddDialog = true" class="add-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Add
-          </button>
-        </div>
-
-        <div v-if="trackedStocks.length === 0" class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="M3 9h18"/>
-            <path d="M9 21V9"/>
-          </svg>
-          <p>No stocks in watchlist</p>
-          <span>Add stocks to track their performance</span>
-        </div>
-
-        <div v-else class="stock-list">
-          <StockCard
-            v-for="stock in trackedStocks"
-            :key="stock.code"
-            :stock="stock"
-            @click="selectStock(stock.code)"
-            @remove="removeStock(stock.code)"
-          />
-        </div>
-      </section>
-    </main>
-
-    <!-- Add Stock Dialog -->
-    <Teleport to="body">
-      <div v-if="showAddDialog" class="dialog-overlay" @click.self="showAddDialog = false">
-        <div class="dialog">
-          <div class="dialog-header">
-            <h4>Add to Watchlist</h4>
-            <button @click="showAddDialog = false" class="close-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
+              <svg v-else-if="stat.direction === 'down'" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M5 8L1 2H9L5 8Z" fill="currentColor"/>
               </svg>
-            </button>
-          </div>
-          <div class="dialog-body">
-            <div class="form-group">
-              <label>Stock Code</label>
-              <input 
-                v-model="newStockCode" 
-                type="text" 
-                placeholder="e.g. 2330"
-                @keyup.enter="addStock"
-              />
-            </div>
-            <div class="form-group">
-              <label>Name (optional)</label>
-              <input 
-                v-model="newStockName" 
-                type="text" 
-                placeholder="e.g. TSMC"
-              />
+              {{ stat.change }}
             </div>
           </div>
-          <div class="dialog-footer">
-            <button @click="showAddDialog = false" class="cancel-btn">Cancel</button>
-            <button @click="addStock" class="confirm-btn">Add</button>
+        </div>
+
+        <!-- Chart section -->
+        <div class="glass-card chart-section">
+          <div class="section-header">
+            <h2 class="section-title">TAIEX Index</h2>
+            <div class="tabs">
+              <button v-for="tab in ['1D', '1W', '1M', '1Y']" 
+                      :key="tab"
+                      class="tab"
+                      :class="{ active: activeTab === tab }"
+                      @click="activeTab = tab">
+                {{ tab }}
+              </button>
+            </div>
+          </div>
+          <div class="chart-area">
+            <svg class="chart-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,90 C40,80 60,70 100,55 C140,40 160,50 200,45 C240,40 280,35 320,28 C360,21 400,15 L400,120 L0,120 Z" fill="url(#chartGradient)"/>
+              <path d="M0,90 C40,80 60,70 100,55 C140,40 160,50 200,45 C240,40 280,35 320,28 C360,21 400,15" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              <circle cx="400" cy="15" r="4" fill="#3b82f6"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Holdings -->
+        <div class="glass-card holdings-section">
+          <div class="section-header">
+            <h2 class="section-title">Positions</h2>
+            <div class="tabs">
+              <button v-for="tab in ['All', 'Long', 'Short']" 
+                      :key="tab"
+                      class="tab"
+                      :class="{ active: activePositionTab === tab }"
+                      @click="activePositionTab = tab">
+                {{ tab }}
+              </button>
+            </div>
+          </div>
+          <div class="holdings-list">
+            <div class="holding-row" v-for="holding in holdings" :key="holding.code">
+              <div class="holding-left">
+                <div class="ticker-badge">{{ holding.code }}</div>
+                <div class="ticker-info">
+                  <span class="ticker-name">{{ holding.name }}</span>
+                  <span class="ticker-code">{{ holding.exchange }}</span>
+                </div>
+              </div>
+              <div class="holding-right">
+                <span class="ticker-price">{{ holding.price }}</span>
+                <span class="ticker-change" :class="holding.change >= 0 ? 'up' : 'down'">
+                  {{ holding.change >= 0 ? '+' : '' }}{{ holding.changePercent }}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </Teleport>
+
+      <!-- Right column -->
+      <div class="right-col">
+        <!-- Order book -->
+        <div class="glass-card order-book">
+          <div class="section-header">
+            <h2 class="section-title">Order Book</h2>
+          </div>
+          <div class="order-book-inner">
+            <div class="ob-header">
+              <span>Bid</span>
+              <span style="text-align:center">Price</span>
+              <span style="text-align:right">Ask</span>
+            </div>
+            <div class="ob-row" v-for="row in orderBook" :key="row.price">
+              <span class="ob-bid">{{ row.bidSize }}</span>
+              <span class="ob-price" :class="{ highlight: row.current }">{{ row.price }}</span>
+              <span class="ob-ask">{{ row.askSize }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick order -->
+        <div class="glass-card quick-order">
+          <div class="section-header">
+            <h2 class="section-title">Quick Order</h2>
+          </div>
+          <div class="order-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Stock</label>
+                <input v-model="orderForm.stock" type="text" class="form-input" placeholder="2330">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantity</label>
+                <input v-model="orderForm.quantity" type="number" class="form-input" placeholder="1">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Price</label>
+                <input v-model="orderForm.price" type="number" class="form-input" placeholder="Market">
+              </div>
+            </div>
+            <div class="order-buttons">
+              <button class="btn-buy" @click="handleOrder('buy')">Buy</button>
+              <button class="btn-sell" @click="handleOrder('sell')">Sell</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent trades -->
+        <div class="glass-card recent-trades">
+          <div class="section-header">
+            <h2 class="section-title">Recent Fills</h2>
+          </div>
+          <div class="trades-list">
+            <div class="trade-row" v-for="trade in trades" :key="trade.id">
+              <span class="trade-time">{{ trade.time }}</span>
+              <span class="trade-side" :class="trade.side.toLowerCase()">{{ trade.side }}</span>
+              <span class="trade-symbol">{{ trade.symbol }}</span>
+              <span class="trade-qty">x{{ trade.quantity }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api'
-import StockChart from '../components/StockChart.vue'
-import StockCard from '../components/StockCard.vue'
 
 const router = useRouter()
-
-const searchCode = ref('')
-const loading = ref(false)
-const error = ref('')
-const showAddDialog = ref(false)
-const newStockCode = ref('')
-const newStockName = ref('')
-const trackedStocks = ref([])
-const currentStock = ref(null)
-const chartData = ref([])
-const selectedPeriod = ref('1M')
+const activeTab = ref('1D')
+const activePositionTab = ref('All')
 const currentTime = ref('')
 
 let timeInterval = null
 
+const stats = reactive([
+  { label: 'Portfolio Value', value: '$1,234,567', change: '+2.34%', direction: 'up', color: '#fafafa' },
+  { label: "Today's P&L", value: '+$12,345', change: '+1.82%', direction: 'up', color: '#22c55e' },
+  { label: 'Positions', value: '8', change: '6 long / 2 short', direction: 'neutral', color: '#fafafa' },
+  { label: 'Available', value: '$98,765', change: 'buying power', direction: 'neutral', color: '#fafafa' }
+])
+
+const holdings = reactive([
+  { code: '2330', name: 'Taiwan Semiconductor', exchange: 'TSMC', price: '$1,050', change: 45, changePercent: 4.48 },
+  { code: '2317', name: 'Foxconn', exchange: 'Foxconn', price: '$185', change: 3.5, changePercent: 1.93 },
+  { code: '2454', name: 'MediaTek', exchange: 'MTK', price: '$1,280', change: -15, changePercent: -1.16 },
+  { code: '2618', name: 'CDIB Financial', exchange: 'CDIB', price: '$13.85', change: 0.25, changePercent: 1.84 }
+])
+
+const orderBook = reactive([
+  { price: '21,450', bidSize: '245', askSize: '-', current: false },
+  { price: '21,445', bidSize: '312', askSize: '-', current: false },
+  { price: '21,440', bidSize: '528', askSize: '-', current: false },
+  { price: '21,435', bidSize: '189', askSize: '-', current: true },
+  { price: '21,430', bidSize: '-', askSize: '421', current: false },
+  { price: '21,425', bidSize: '-', askSize: '356', current: false },
+  { price: '21,420', bidSize: '-', askSize: '289', current: false }
+])
+
+const orderForm = reactive({
+  stock: '',
+  quantity: '',
+  price: ''
+})
+
+const trades = reactive([
+  { id: 1, time: '16:08:32', side: 'BUY', symbol: '2330', quantity: 1 },
+  { id: 2, time: '16:07:15', side: 'SELL', symbol: '2317', quantity: 2 },
+  { id: 3, time: '16:05:48', side: 'BUY', symbol: '2454', quantity: 1 },
+  { id: 4, time: '16:03:22', side: 'BUY', symbol: '2618', quantity: 5 }
+])
+
 const updateTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleString('en-US', { 
-    month: 'short', 
+  currentTime.value = now.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
     hour12: false
-  })
-}
-
-onMounted(() => {
-  updateTime()
-  timeInterval = setInterval(updateTime, 1000)
-  loadTrackedStocks()
-})
-
-onUnmounted(() => {
-  if (timeInterval) clearInterval(timeInterval)
-})
-
-const priceColorClass = computed(() => {
-  if (!currentStock.value) return ''
-  if (currentStock.value.change > 0) return 'price-up'
-  if (currentStock.value.change < 0) return 'price-down'
-  return 'price-neutral'
-})
-
-const formatPrice = (price) => {
-  return price ? price.toFixed(2) : '0.00'
-}
-
-const formatVolume = (vol) => {
-  if (!vol) return '0'
-  if (vol >= 1000000) return (vol / 1000000).toFixed(2) + 'M'
-  if (vol >= 1000) return (vol / 1000).toFixed(1) + 'K'
-  return vol.toString()
-}
-
-const formatTime = (timeStr) => {
-  if (!timeStr) return '--:--'
-  try {
-    const date = new Date(timeStr)
-    return date.toLocaleTimeString('en-US', { hour12: false })
-  } catch {
-    return '--:--'
-  }
-}
-
-const loadTrackedStocks = async () => {
-  try {
-    const response = await api.getTrackedStocks()
-    if (response.data.success) {
-      trackedStocks.value = response.data.data
-    }
-  } catch (err) {
-    console.error('Failed to load stocks:', err)
-  }
-}
-
-const searchStock = async () => {
-  if (!searchCode.value.trim()) return
-  
-  loading.value = true
-  error.value = ''
-  
-  try {
-    const response = await api.getQuote(searchCode.value.trim().toUpperCase())
-    if (response.data.success) {
-      currentStock.value = response.data.data
-      
-      try {
-        const kbarsResponse = await api.getKbars(searchCode.value.trim().toUpperCase())
-        if (kbarsResponse.data?.data?.kbars) {
-          chartData.value = kbarsResponse.data.data.kbars.map(d => ({
-            time: d.date,
-            open: parseFloat(d.open),
-            high: parseFloat(d.high),
-            low: parseFloat(d.low),
-            close: parseFloat(d.close),
-            volume: parseInt(d.volume)
-          })).reverse()
-        }
-      } catch (kbErr) {
-        console.error('Failed to fetch kbars:', kbErr)
-        chartData.value = []
-      }
-    } else {
-      error.value = response.data.message || 'Stock not found'
-    }
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Query failed'
-  } finally {
-    loading.value = false
-  }
-}
-
-const selectStock = (code) => {
-  searchCode.value = code
-  searchStock()
-}
-
-const addStock = async () => {
-  if (!newStockCode.value.trim()) return
-  
-  try {
-    const response = await api.addStock(newStockCode.value, newStockName.value || newStockCode.value)
-    if (response.data.success) {
-      loadTrackedStocks()
-      showAddDialog.value = false
-      newStockCode.value = ''
-      newStockName.value = ''
-    }
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Add failed'
-  }
-}
-
-const removeStock = async (code) => {
-  try {
-    await api.removeStock(code)
-    loadTrackedStocks()
-  } catch (err) {
-    console.error('Remove failed:', err)
-  }
+  }).replace(/\//g, '/')
 }
 
 const handleLogout = () => {
   localStorage.removeItem('token')
   router.push('/login')
 }
+
+const handleOrder = (side) => {
+  console.log(`${side} order:`, orderForm)
+}
+
+onMounted(() => {
+  updateTime()
+  timeInterval = setInterval(updateTime, 1000)
+})
+
+onUnmounted(() => {
+  if (timeInterval) clearInterval(timeInterval)
+})
 </script>
 
 <style scoped>
+/* Variables */
+:root {
+  --bg-base: #09090b;
+  --bg-elevated: #18181b;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background: var(--bg-base);
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Header */
@@ -386,10 +289,10 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 2rem;
-  background: rgba(30, 41, 59, 0.6);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(9, 9, 11, 0.8);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -398,549 +301,510 @@ const handleLogout = () => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
 }
 
-.logo {
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  border-radius: 8px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-.header-title h1 {
-  font-size: 1.125rem;
+.logo-text {
+  font-size: 14px;
   font-weight: 600;
-  color: #f8fafc;
-  margin: 0;
-}
-
-.timestamp {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
-.logout-btn {
+.live-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 0.5rem;
-  color: #fca5a5;
-  font-size: 0.875rem;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.time-display {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.logout-btn svg {
-  width: 16px;
-  height: 16px;
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
-.logout-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-}
-
-/* Main Content */
-.main-content {
-  max-width: 1400px;
+/* Main grid */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  padding: 20px 24px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem;
+}
+
+.left-col, .right-col {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 20px;
 }
 
-/* Search Section */
-.search-section {
-  width: 100%;
-}
-
-.search-card {
-  display: flex;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 1rem;
-}
-
-.search-input-wrapper {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  width: 20px;
-  height: 20px;
-  color: #64748b;
-}
-
-.search-input-wrapper input {
-  width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.75rem;
-  color: #f1f5f9;
-  font-size: 1rem;
-}
-
-.search-input-wrapper input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-.search-btn {
-  padding: 0 2rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  font-weight: 600;
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 120px;
-}
-
-.search-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
-}
-
-.search-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.clear-btn {
-  position: absolute;
-  right: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-}
-
-.clear-btn svg {
-  width: 16px;
-  height: 16px;
-  color: #64748b;
-}
-
-.spinner {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-/* Error Toast */
-.error-toast {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 0.75rem;
-  color: #fca5a5;
-  font-size: 0.875rem;
-  animation: slideIn 0.3s ease;
-}
-
-.error-toast svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-/* Stock Grid */
-.stock-grid {
+/* Stats row */
+.stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
 }
-
-@media (max-width: 768px) {
-  .stock-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stock-price-card {
-  padding: 1.5rem;
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 1rem;
-}
-
-.card-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.75rem;
-}
-
-.stock-code {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
-.stock-name {
-  font-size: 0.875rem;
-  color: #94a3b8;
-  margin-bottom: 1rem;
-}
-
-.stock-price {
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-
-.stock-change {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.stock-change svg {
-  width: 18px;
-  height: 18px;
-}
-
-.price-up { color: #22c55e; }
-.price-down { color: #ef4444; }
-.price-neutral { color: #94a3b8; }
 
 .stat-card {
-  padding: 1.5rem;
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 1rem;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 26px;
   font-weight: 700;
-  color: #f8fafc;
-  margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
 }
 
-.stat-desc {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-/* Chart Section */
-.chart-section {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 1rem;
-  padding: 1.5rem;
-}
-
-.chart-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.chart-header h3 {
-  font-size: 1rem;
+.stat-delta {
+  font-size: 12px;
   font-weight: 600;
-  color: #f8fafc;
-}
-
-.chart-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chart-controls button {
-  padding: 0.375rem 0.75rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.5rem;
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.chart-controls button:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #94a3b8;
-}
-
-.chart-controls button.active {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
-}
-
-.chart-wrapper {
-  height: 400px;
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-.chart-loading {
-  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
 }
 
-.skeleton-chart {
-  width: 100%;
-  height: 300px;
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(30, 41, 59, 0.5) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.5rem;
+.stat-delta.up { color: var(--success); }
+.stat-delta.down { color: var(--danger); }
+.stat-delta.neutral { color: var(--text-muted); }
+
+/* Glass card */
+.glass-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-/* Watchlist Section */
+.glass-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Section header */
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.section-header h3 {
-  font-size: 1rem;
+.section-title {
+  font-size: 13px;
   font-weight: 600;
-  color: #f8fafc;
-}
-
-.add-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 0.5rem;
-  color: #60a5fa;
-  font-size: 0.875rem;
-  font-weight: 500;
+  gap: 8px;
+}
+
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+}
+
+.tab {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
-.add-btn svg {
-  width: 16px;
-  height: 16px;
+.tab.active {
+  background: var(--accent);
+  color: white;
 }
 
-.add-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
+.tab:not(.active):hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
 }
 
-.empty-state {
+/* Chart */
+.chart-section .chart-area {
+  padding: 20px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 180px;
+}
+
+/* Holdings */
+.holdings-section .holdings-list {
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px dashed rgba(148, 163, 184, 0.2);
-  border-radius: 1rem;
-  text-align: center;
+  gap: 6px;
 }
 
-.empty-state svg {
-  width: 48px;
-  height: 48px;
-  color: #475569;
-  margin-bottom: 1rem;
-}
-
-.empty-state p {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.empty-state span {
-  font-size: 0.875rem;
-  color: #475569;
-}
-
-.stock-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-/* Dialog */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 1rem;
-}
-
-.dialog {
-  width: 100%;
-  max-width: 400px;
-  background: #1e293b;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.dialog-header {
+.holding-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.dialog-header h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #f8fafc;
-}
-
-.close-btn {
-  background: none;
-  border: none;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
   cursor: pointer;
-  padding: 0.25rem;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.close-btn svg {
-  width: 20px;
-  height: 20px;
-  color: #64748b;
+.holding-row:hover {
+  background: rgba(255,255,255,0.03);
+  border-color: var(--border-subtle);
 }
 
-.dialog-body {
-  padding: 1.5rem;
+.holding-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticker-badge {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+}
+
+.ticker-info {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2px;
+}
+
+.ticker-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticker-code {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.holding-right {
+  text-align: right;
+}
+
+.ticker-price {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.ticker-change {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticker-change.up { color: var(--success); }
+.ticker-change.down { color: var(--danger); }
+
+/* Order book */
+.order-book-inner {
+  padding: 12px 16px;
+}
+
+.ob-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ob-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 8px 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  transition: background 0.15s;
+}
+
+.ob-row:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.ob-bid { color: var(--success); }
+.ob-ask { color: var(--danger); }
+.ob-price { color: var(--text-secondary); text-align: center; }
+.ob-price.highlight {
+  color: var(--text-primary);
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.15);
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+/* Quick order */
+.order-form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 6px;
 }
 
-.form-group label {
-  font-size: 0.875rem;
+.form-label {
+  font-size: 10px;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.form-group input {
-  padding: 0.75rem 1rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.5rem;
-  color: #f1f5f9;
-  font-size: 0.9375rem;
-}
-
-.form-group input:focus {
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   outline: none;
-  border-color: #3b82f6;
+  transition: border-color 0.2s;
+  font-variant-numeric: tabular-nums;
 }
 
-.dialog-footer {
-  display: flex;
-  gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
+.form-input::placeholder {
+  color: var(--text-muted);
 }
 
-.cancel-btn, .confirm-btn {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+.form-input:focus {
+  border-color: var(--accent);
 }
 
-.cancel-btn {
-  background: rgba(148, 163, 184, 0.1);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
+.order-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.cancel-btn:hover {
-  background: rgba(148, 163, 184, 0.15);
-}
-
-.confirm-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+.btn-buy, .btn-sell {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
   border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-buy {
   color: white;
+  background: var(--success);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
-.confirm-btn:hover {
+.btn-buy:hover {
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.btn-sell {
+  color: white;
+  background: var(--danger);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.btn-sell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Recent trades */
+.trades-list {
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.trade-row {
+  display: grid;
+  grid-template-columns: 60px 40px 1fr 40px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  font-size: 12px;
+}
+
+.trade-time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.trade-side {
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.trade-side.buy {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+}
+
+.trade-side.sell {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.trade-symbol {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.trade-qty {
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .right-col {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

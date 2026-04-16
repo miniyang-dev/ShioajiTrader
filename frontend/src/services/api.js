@@ -1,29 +1,18 @@
 import axios from 'axios'
 
 // API Base URL configuration
-// In production, API is served from same origin (/api/*)
-// Use relative URLs for same-origin deployment
-const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_URL
-  if (envUrl) {
-    return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl
-  }
-  // In production (deployed), use same origin
-  // In development, this allows Vite proxy to handle it
-  return ''
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
-const API_BASE_URL = getApiBaseUrl()
-
+// Create axios instance with interceptors
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 })
 
-// Request interceptor to add JWT token
+// Request interceptor - add auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -32,10 +21,12 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error)
+  }
 )
 
-// Response interceptor for error handling
+// Response interceptor - handle errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -46,79 +37,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
-
-export default {
-  // Auth
-  login(apiKey, apiSecret) {
-    return apiClient.post('/api/auth/login', { apiKey, apiSecret })
-  },
-
-  // Stocks
-  getQuote(code) {
-    return apiClient.get(`/api/stocks/${code}`)
-  },
-
-  getTrackedStocks() {
-    return apiClient.get('/api/stocks')
-  },
-
-  addStock(code, name) {
-    return apiClient.post('/api/stocks', { code, name })
-  },
-
-  removeStock(code) {
-    return apiClient.delete(`/api/stocks/${code}`)
-  },
-
-  getKbars(code, days = 30) {
-    return apiClient.get(`/api/stocks/${code}/kbars`, { params: { days } })
-  },
-
-  // Orders
-  getOrders() {
-    return apiClient.get('/api/orders')
-  },
-
-  getOrder(id) {
-    return apiClient.get(`/api/orders/${id}`)
-  },
-
-  placeMarketOrder(code, name, side, quantity) {
-    return apiClient.post('/api/orders/market', {
-      stockCode: code,
-      stockName: name,
-      side,
-      quantity
-    })
-  },
-
-  placeLimitOrder(code, name, side, quantity, price) {
-    return apiClient.post('/api/orders/limit', {
-      stockCode: code,
-      stockName: name,
-      side,
-      quantity,
-      price
-    })
-  },
-
-  cancelOrder(id) {
-    return apiClient.post(`/api/orders/${id}/cancel`)
-  },
-
-  getTodayStatistics() {
-    return apiClient.get('/api/orders/today')
-  },
-
-  // User
-  getProfile() {
-    return apiClient.get('/api/users/me')
-  },
-
-  updateProfile(username, email) {
-    return apiClient.put('/api/users/me', { username, email })
-  },
-}
 
 // SSE Stream connection
 export function createStockStream(code, onMessage, onError) {
@@ -145,3 +63,49 @@ export function createStockStream(code, onMessage, onError) {
     eventSource.close()
   }
 }
+
+// Named exports
+export const login = (apiKey, apiSecret) => 
+  apiClient.post('/api/auth/login', { apiKey, apiSecret })
+
+export const getQuote = (code) => 
+  apiClient.get(`/api/stocks/${code}`)
+
+export const getTrackedStocks = () => 
+  apiClient.get('/api/stocks')
+
+export const addStock = (code, name) => 
+  apiClient.post('/api/stocks', { code, name })
+
+export const removeStock = (code) => 
+  apiClient.delete(`/api/stocks/${code}`)
+
+export const getKbars = (code, days = 30) => 
+  apiClient.get(`/api/stocks/${code}/kbars`, { params: { days } })
+
+export const getOrders = () => 
+  apiClient.get('/api/orders')
+
+export const getOrder = (id) => 
+  apiClient.get(`/api/orders/${id}`)
+
+export const placeMarketOrder = (code, name, side, quantity) => 
+  apiClient.post('/api/orders/market', { stockCode: code, stockName: name, side, quantity })
+
+export const placeLimitOrder = (code, name, side, quantity, price) => 
+  apiClient.post('/api/orders/limit', { stockCode: code, stockName: name, side, quantity, price })
+
+export const cancelOrder = (id) => 
+  apiClient.post(`/api/orders/${id}/cancel`)
+
+export const getTodayStatistics = () => 
+  apiClient.get('/api/orders/today')
+
+export const getProfile = () => 
+  apiClient.get('/api/users/me')
+
+export const updateProfile = (username, email) => 
+  apiClient.put('/api/users/me', { username, email })
+
+// Default export for backward compatibility
+export default apiClient

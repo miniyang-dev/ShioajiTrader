@@ -1,193 +1,56 @@
-@import "tailwindcss";
+/* Global styles - Geist font via Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
 
-:root {
-  --font-sans: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --color-surface: rgba(30, 41, 59, 0.7);
-  --color-border: rgba(148, 163, 184, 0.1);
-  --color-acent: #3b82f6;
-  --color-accent-hover: #2563eb;
-}
-
-* {
+/* CSS Reset */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
+html, body, #app {
+  height: 100%;
+}
+
 body {
-  font-family: var(--font-sans);
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-  min-height: 100vh;
-  color: #f1f5f9;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #09090b;
+  color: #fafafa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Premium Glassmorphism */
-.glass-card {
-  background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-  border-radius: 1rem;
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+/* Links */
+a {
+  color: #3b82f6;
+  text-decoration: none;
 }
 
-/* Input Fields */
-.input-field {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #f1f5f9;
-  transition: all 0.2s ease;
-  width: 100%;
+a:hover {
+  color: #2563eb;
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: var(--color-acent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.input-field::placeholder {
-  color: #64748b;
-}
-
-/* Buttons */
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-acent) 0%, var(--color-acent-hover) 100%);
-  color: #ffffff;
-  font-weight: 600;
-  padding: 0.875rem 1.5rem;
-  border-radius: 0.75rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-/* Stock Price Colors */
-.price-up {
-  color: #22c55e;
-}
-
-.price-down {
-  color: #ef4444;
-}
-
-.price-neutral {
-  color: #94a3b8;
-}
-
-/* Chart Container */
-.chart-container {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-}
-
-/* Card Hover Effects */
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(59, 130, 246, 0.2);
-}
-
-/* Skeleton Loading */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(30, 41, 59, 0.5) 0%,
-    rgba(30, 41, 59, 0.8) 50%,
-    rgba(30, 41, 59, 0.5) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.5rem;
-}
-
-/* Smooth Scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom Scrollbar */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: #09090b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Animation Utilities */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-  50% { box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.2); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s infinite;
-}
-
-/* Staggered Animation Delays */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-.stagger-5 { animation-delay: 0.5s; }
