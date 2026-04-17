@@ -21,7 +21,7 @@ export function Login() {
     setLoading(true);
 
     if (!apiKey || !apiSecret) {
-      setError("請輸入帳號和密碼");
+      setError("請輸入 Account 和 Password");
       setLoading(false);
       return;
     }
@@ -43,7 +43,7 @@ export function Login() {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page dark">
       <div className="login-bg" />
       <div className="login-grid" />
       
@@ -59,8 +59,7 @@ export function Login() {
           <span className="login-logo-text">IreneTrader</span>
         </div>
 
-        <h1 className="login-title">登入帳戶</h1>
-        <p className="login-subtitle">連接永豐金融 API</p>
+        <h1 className="login-title">Sign in to your account</h1>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
@@ -109,7 +108,7 @@ export function Login() {
             {loading ? (
               <span className="login-spinner" />
             ) : (
-              "登入"
+              "Sign In"
             )}
           </button>
         </form>

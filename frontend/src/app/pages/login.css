@@ -1,6 +1,7 @@
-@import "tailwindcss";
-
-/* Login Page - Using theme CSS variables */
+/* Login Page - Dark Theme */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 .login-page {
   min-height: 100vh;
@@ -17,7 +18,8 @@
   inset: 0;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    var(--background);
   z-index: 0;
 }
 
@@ -41,7 +43,7 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .login-logo {
@@ -78,12 +80,6 @@
   font-weight: 600;
   color: var(--foreground);
   letter-spacing: -0.02em;
-  margin: 0 0 8px;
-}
-
-.login-subtitle {
-  font-size: 14px;
-  color: var(--muted-foreground);
   margin: 0 0 32px;
 }
 
@@ -101,7 +97,7 @@
 
 .login-label {
   font-size: 12px;
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -113,7 +109,7 @@
   font-size: 14px;
   font-family: inherit;
   color: var(--foreground);
-  background: var(--input-background);
+  background: var(--input);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) - 2px);
   outline: none;
