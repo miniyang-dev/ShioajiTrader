@@ -149,16 +149,25 @@
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
-  color: var(--primary-foreground, white);
-  background: var(--primary, #3b82f6);
+  color: #ffffff;
+  background: #3b82f6;
   border: none;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: none;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.login-button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .login-button:hover:not(:disabled) {
