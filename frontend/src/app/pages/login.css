@@ -1,0 +1,212 @@
+/* Login Page - Taste Skill Design */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+
+.login-bg-ambient {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    #09090b;
+  z-index: -2;
+}
+
+.login-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: -1;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.login-logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.login-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #fafafa;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #71717a;
+  margin: 0 0 32px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #fafafa;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-variant-numeric: tabular-nums;
+}
+
+.login-input::placeholder {
+  color: #71717a;
+}
+
+.login-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.login-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #ef4444;
+}
+
+.login-button {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: white;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: login-spin 0.8s linear infinite;
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-demo {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.login-demo-label {
+  font-size: 11px;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.login-demo-cred {
+  font-size: 12px;
+  font-family: 'Geist Mono', monospace;
+  color: #a1a1aa;
+  background: rgba(255,255,255,0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
