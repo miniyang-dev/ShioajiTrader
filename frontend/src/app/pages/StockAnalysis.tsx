@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Search, TrendingUp, DollarSign, Lightbulb, BarChart3, AlertCircle } from "lucide-react";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { Skeleton, ChartSkeleton, CardSkeleton } from "../components/LoadingSkeleton";
+import { "../../styles/theme.css";
 
-// 模擬技術指標數據
 const priceData = [
   { date: "03/01", price: 145, ma5: 142, ma20: 140, ma60: 138 },
   { date: "03/08", price: 148, ma5: 144, ma20: 141, ma60: 139 },
@@ -66,13 +67,13 @@ export function StockAnalysis() {
 
   return (
     <div className="space-y-4">
-      {/* Header - Compact */}
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">個股分析</h1>
       </div>
 
-      {/* Search Box - Compact */}
-      <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800">
+      {/* Search Box */}
+      <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800 shadow-card transition-spring hover-lift">
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -82,48 +83,57 @@ export function StockAnalysis() {
               value={stockCode}
               onChange={(e) => setStockCode(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#0a0e17] border border-gray-800 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#0a0e17] border border-gray-800 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm transition-spring"
             />
           </div>
           <button
             onClick={handleAnalyze}
             disabled={analyzing}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 rounded-lg text-sm font-medium"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 rounded-lg text-sm font-medium transition-spring btn-press"
           >
             {analyzing ? "分析中..." : "分析"}
           </button>
         </div>
       </div>
 
+      {/* Loading State */}
+      {analyzing && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <CardSkeleton />
+          <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg p-4"><Skeleton height="120px" /></div>
+          <CardSkeleton />
+        </div>
+      )}
+
       {/* Analysis Results */}
-      {analysisResult && (
+      {analysisResult && !analyzing && (
         <>
-          {/* Stock Info & Score - Compact Grid */}
+          {/* Stock Info & Score */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Stock Basic Info */}
-            <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800">
+            <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800 shadow-card transition-spring hover-lift">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-gray-400 text-xs">股票</div>
-                  <div className="text-xl font-semibold">
+                  <div className="text-xl font-semibold tabular-nums">
                     {analysisResult.stockCode} {analysisResult.stockName}
                   </div>
                 </div>
               </div>
               <div className="mt-3">
-                <div className="text-3xl font-bold text-green-500">
+                <div className="text-3xl font-bold text-green-500 tabular-nums">
                   ${analysisResult.currentPrice}
                 </div>
-                <div className="text-green-500 text-sm">
+                <div className="text-green-500 text-sm tabular-nums">
                   +{analysisResult.change} (+{analysisResult.changePercent}%)
                 </div>
               </div>
             </div>
 
             {/* Total Score */}
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg p-4 text-white">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg p-4 text-white shadow-card transition-spring hover-lift">
               <div className="text-xs opacity-90 mb-1">綜合評分</div>
-              <div className="text-5xl font-bold">{analysisResult.totalScore}</div>
+              <div className="text-5xl font-bold tabular-nums">{analysisResult.totalScore}</div>
               <div className="text-xs opacity-90">滿分 40 分</div>
               <div className="mt-2 pt-2 border-t border-white/20">
                 <div className="text-lg font-semibold">{analysisResult.rating}</div>
@@ -131,18 +141,18 @@ export function StockAnalysis() {
             </div>
 
             {/* Suggested Action */}
-            <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800">
+            <div className="bg-[#13161f] rounded-lg p-4 border border-gray-800 shadow-card transition-spring hover-lift">
               <div className="text-gray-400 text-xs mb-3">操作建議</div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-gray-400">買入區間</div>
-                  <div className="text-sm font-semibold text-green-500">
+                  <div className="text-sm font-semibold text-green-500 tabular-nums">
                     ${analysisResult.suggestedPrice.low}-${analysisResult.suggestedPrice.high}
                   </div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">停損價位</div>
-                  <div className="text-sm font-semibold text-red-500">
+                  <div className="text-sm font-semibold text-red-500 tabular-nums">
                     ${analysisResult.stopLoss}
                   </div>
                 </div>
@@ -154,9 +164,9 @@ export function StockAnalysis() {
             </div>
           </div>
 
-          {/* Score Breakdown & Technicals - 2 Column Layout */}
+          {/* Score Breakdown & Technicals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Score Details - Compact Cards */}
+            {/* Score Details */}
             <div className="grid grid-cols-2 gap-3">
               <ScoreCardCompact
                 title="趨勢"
@@ -188,41 +198,41 @@ export function StockAnalysis() {
               />
             </div>
 
-            {/* Technical Indicators & Institutional - Compact */}
+            {/* Technical Indicators & Institutional */}
             <div className="space-y-3">
               {/* Technical */}
-              <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+              <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800 shadow-card transition-spring hover-lift">
                 <h3 className="text-sm font-semibold mb-2">技術指標</h3>
                 <div className="grid grid-cols-4 gap-2">
-                  <div className="bg-[#0a0e17] p-2 rounded text-center">
+                  <div className="bg-[#0a0e17] p-2 rounded text-center transition-spring hover:bg-[#1a1f2e]">
                     <div className="text-xs text-gray-400">RSI</div>
-                    <div className="text-sm font-semibold text-green-500">{analysisResult.technicals.rsi}</div>
+                    <div className="text-sm font-semibold text-green-500 tabular-nums">{analysisResult.technicals.rsi}</div>
                   </div>
-                  <div className="bg-[#0a0e17] p-2 rounded text-center">
+                  <div className="bg-[#0a0e17] p-2 rounded text-center transition-spring hover:bg-[#1a1f2e]">
                     <div className="text-xs text-gray-400">MACD</div>
                     <div className="text-sm font-semibold text-green-500">{analysisResult.technicals.macd}</div>
                   </div>
-                  <div className="bg-[#0a0e17] p-2 rounded text-center">
+                  <div className="bg-[#0a0e17] p-2 rounded text-center transition-spring hover:bg-[#1a1f2e]">
                     <div className="text-xs text-gray-400">KD</div>
-                    <div className="text-sm font-semibold">{analysisResult.technicals.kd.k}/{analysisResult.technicals.kd.d}</div>
+                    <div className="text-sm font-semibold tabular-nums">{analysisResult.technicals.kd.k}/{analysisResult.technicals.kd.d}</div>
                   </div>
-                  <div className="bg-[#0a0e17] p-2 rounded text-center">
+                  <div className="bg-[#0a0e17] p-2 rounded text-center transition-spring hover:bg-[#1a1f2e]">
                     <div className="text-xs text-gray-400">ATR</div>
-                    <div className="text-sm font-semibold">{analysisResult.technicals.atr}</div>
+                    <div className="text-sm font-semibold tabular-nums">{analysisResult.technicals.atr}</div>
                   </div>
                 </div>
               </div>
 
               {/* Institutional */}
-              <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+              <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800 shadow-card transition-spring hover-lift">
                 <h3 className="text-sm font-semibold mb-2">三大法人（千股）</h3>
                 <div className="space-y-1.5">
                   {institutionalData.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between text-xs">
+                    <div key={item.name} className="flex items-center justify-between text-xs transition-spring hover:bg-[#0a0e17] p-1 -mx-1 rounded">
                       <span className="font-medium w-12">{item.name}</span>
-                      <span className="text-green-500">{item.buy.toLocaleString()}</span>
-                      <span className="text-red-500">{item.sell.toLocaleString()}</span>
-                      <span className={item.net >= 0 ? "text-green-500" : "text-red-500"}>
+                      <span className="text-green-500 tabular-nums">{item.buy.toLocaleString()}</span>
+                      <span className="text-red-500 tabular-nums">{item.sell.toLocaleString()}</span>
+                      <span className={item.net >= 0 ? "text-green-500 tabular-nums" : "text-red-500 tabular-nums"}>
                         {item.net >= 0 ? "+" : ""}{item.net.toLocaleString()}
                       </span>
                     </div>
@@ -232,9 +242,9 @@ export function StockAnalysis() {
             </div>
           </div>
 
-          {/* Charts - Compact */}
+          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+            <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800 shadow-card transition-spring hover-lift">
               <h3 className="text-sm font-semibold mb-2">價格走勢</h3>
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={priceData}>
@@ -248,7 +258,7 @@ export function StockAnalysis() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+            <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800 shadow-card transition-spring hover-lift">
               <h3 className="text-sm font-semibold mb-2">成交量</h3>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={volumeData}>
@@ -291,7 +301,7 @@ function ScoreCardCompact({ title, score, maxScore, icon, color }: ScoreCardComp
   };
 
   return (
-    <div className={`rounded-lg p-3 border ${bgClasses[color]}`}>
+    <div className={`rounded-lg p-3 border shadow-card transition-spring hover-lift ${bgClasses[color]}`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={`p-1 bg-gradient-to-br ${colorClasses[color]} rounded text-white`}>
@@ -299,10 +309,10 @@ function ScoreCardCompact({ title, score, maxScore, icon, color }: ScoreCardComp
           </div>
           <span className="text-xs font-medium">{title}</span>
         </div>
-        <span className="text-lg font-bold">{score}</span>
+        <span className="text-lg font-bold tabular-nums">{score}</span>
       </div>
       <div className="w-full bg-gray-800 rounded-full h-1.5">
-        <div className={`h-1.5 rounded-full bg-gradient-to-r ${colorClasses[color]}`} style={{ width: `${percentage}%` }}></div>
+        <div className={`h-1.5 rounded-full bg-gradient-to-r ${colorClasses[color]} transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
       </div>
     </div>
   );
