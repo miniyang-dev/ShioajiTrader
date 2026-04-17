@@ -21,7 +21,7 @@ export function Login() {
     setLoading(true);
 
     if (!apiKey || !apiSecret) {
-      setError("Please enter both API Key and Secret");
+      setError("請輸入帳號和密碼");
       setLoading(false);
       return;
     }
@@ -33,10 +33,10 @@ export function Login() {
         localStorage.setItem("token", result.token);
         navigate("/");
       } else {
-        setError(result.message || "Login failed");
+        setError(result.message || "登入失敗");
       }
     } catch (err) {
-      setError("Connection error. Please try again.");
+      setError("連線錯誤，請稍後再試");
     } finally {
       setLoading(false);
     }
@@ -44,7 +44,7 @@ export function Login() {
 
   return (
     <div className="login-page">
-      <div className="login-bg-ambient" />
+      <div className="login-bg" />
       <div className="login-grid" />
       
       <div className="login-card">
@@ -59,17 +59,17 @@ export function Login() {
           <span className="login-logo-text">ShioajiTrader</span>
         </div>
 
-        <h1 className="login-title">Sign in to your account</h1>
-        <p className="login-subtitle">Connect to SinoPac shioaji API</p>
+        <h1 className="login-title">登入帳戶</h1>
+        <p className="login-subtitle">連接永豐 shioaji API</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
-            <label htmlFor="apiKey" className="login-label">API Key</label>
+            <label htmlFor="apiKey" className="login-label">帳號</label>
             <input
               id="apiKey"
               type="text"
               className="login-input"
-              placeholder="Enter your API key"
+              placeholder="輸入帳號"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               autoComplete="username"
@@ -78,12 +78,12 @@ export function Login() {
           </div>
 
           <div className="login-field">
-            <label htmlFor="apiSecret" className="login-label">API Secret</label>
+            <label htmlFor="apiSecret" className="login-label">密碼</label>
             <input
               id="apiSecret"
               type="password"
               className="login-input"
-              placeholder="Enter your API secret"
+              placeholder="輸入密碼"
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
               autoComplete="current-password"
@@ -109,14 +109,14 @@ export function Login() {
             {loading ? (
               <span className="login-spinner" />
             ) : (
-              "Sign In"
+              "登入"
             )}
           </button>
         </form>
 
         <div className="login-demo">
-          <span className="login-demo-label">Demo account</span>
-          <code className="login-demo-cred">sheep / pass.1234</code>
+          <span className="login-demo-label">測試帳號</span>
+          <code className="login-demo-cred">Irene / pass.1234</code>
         </div>
       </div>
     </div>

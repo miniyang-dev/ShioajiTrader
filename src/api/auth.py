@@ -41,9 +41,9 @@ def ensure_data_dir():
         hashed = hash_password(default_password)
         default_user = {
             "id": "1",
-            "username": "sheep",
+            "username": "Irene",
             "password": hashed,
-            "email": "sheep@example.com",
+            "email": "irene@example.com",
             "createdAt": "2026-04-15T00:00:00Z"
         }
         USERS_FILE.write_text(json.dumps([default_user], indent=2))
