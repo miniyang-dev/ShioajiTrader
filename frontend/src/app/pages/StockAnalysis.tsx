@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, TrendingUp, DollarSign, Lightbulb, BarChart3, AlertCircle } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Skeleton, ChartSkeleton, CardSkeleton } from "../components/LoadingSkeleton";
-import { "../../styles/theme.css";
+import "../../styles/theme.css";
 
 const priceData = [
   { date: "03/01", price: 145, ma5: 142, ma20: 140, ma60: 138 },
