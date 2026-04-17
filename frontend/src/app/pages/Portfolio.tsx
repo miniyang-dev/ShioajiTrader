@@ -1,368 +1,206 @@
 import { useState } from "react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, AlertTriangle, CheckCircle, Plus, Trash2 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
-const marketStatus = {
-  trend: "多頭",
-  status: "強勢",
-  recommendation: "可維持 7-8 成持股",
-  description: "大盤處於多頭排列，建議積極持股"
-};
-
-const holdings = [
-  { 
-    id: 1,
-    symbol: "2330", 
-    name: "台積電", 
-    shares: 10, 
-    avgCost: 580, 
-    currentPrice: 615,
-    value: 6150,
-    profit: 350,
-    profitPercent: 6.03,
-    stopLoss: 560,
-    status: "健康",
-    signals: ["價格站穩月線", "外資持續買超"],
-    warnings: []
-  },
-  { 
-    id: 2,
-    symbol: "2454", 
-    name: "聯發科", 
-    shares: 5, 
-    avgCost: 920, 
-    currentPrice: 885,
-    value: 4425,
-    profit: -175,
-    profitPercent: -3.80,
-    stopLoss: 880,
-    status: "警示",
-    signals: [],
-    warnings: ["接近停損價", "投信連續賣超"]
-  },
-  { 
-    id: 3,
-    symbol: "2317", 
-    name: "鴻海", 
-    shares: 20, 
-    avgCost: 105, 
-    currentPrice: 112,
-    value: 2240,
-    profit: 140,
-    profitPercent: 6.67,
-    stopLoss: 100,
-    status: "健康",
-    signals: ["突破季線壓力", "法人買超"],
-    warnings: []
-  },
-  { 
-    id: 4,
-    symbol: "2882", 
-    name: "國泰金", 
-    shares: 15, 
-    avgCost: 62, 
-    currentPrice: 58,
-    value: 870,
-    profit: -60,
-    profitPercent: -6.45,
-    stopLoss: 56,
-    status: "注意",
-    signals: [],
-    warnings: ["跌破月線支撐"]
-  },
+const portfolioData = [
+  { date: "03/01", total: 985000, daily: 0 },
+  { date: "03/08", total: 1020000, daily: 35000 },
+  { date: "03/15", total: 998000, daily: -22000 },
+  { date: "03/22", total: 1085000, daily: 87000 },
+  { date: "03/29", total: 1120000, daily: 35000 },
+  { date: "04/05", total: 1150000, daily: 30000 },
+  { date: "04/12", total: 1180000, daily: 30000 },
+  { date: "04/16", total: 1234567, daily: 54567 },
 ];
 
-const performanceData = [
-  { date: "1月", value: 12500 },
-  { date: "2月", value: 12800 },
-  { date: "3月", value: 12300 },
-  { date: "4月", value: 13685 },
+const positions = [
+  { code: "2330", name: "台積電", qty: 1000, avg: 610, cur: 615, pnl: 5000, pct: 4.15, side: "long" },
+  { code: "2308", name: "台達電", qty: 500, avg: 385, cur: 395, pnl: 5000, pct: 2.60, side: "long" },
+  { code: "3711", name: "日月光", qty: 300, avg: 145, cur: 152, pnl: 2100, pct: 4.83, side: "long" },
+  { code: "2454", name: "聯發科", qty: 200, avg: 920, cur: 885, pnl: -7000, pct: -3.80, side: "short" },
+  { code: "2618", name: "開發金", qty: 1000, avg: 13.2, cur: 13.85, pnl: 650, pct: 4.92, side: "long" },
 ];
 
-const alerts = [
-  { 
-    id: 1, 
-    type: "warning", 
-    stock: "2454 聯發科", 
-    message: "即將觸及停損價位 $880，目前價格 $885", 
-    time: "2小時前" 
-  },
-  { 
-    id: 2, 
-    type: "info", 
-    stock: "2330 台積電", 
-    message: "外資連續5日買超，累計買超 15,234 張", 
-    time: "5小時前" 
-  },
-  { 
-    id: 3, 
-    type: "warning", 
-    stock: "2882 國泰金", 
-    message: "跌破20日均線，投信轉為賣超", 
-    time: "1天前" 
-  },
+const recentTrades = [
+  { time: "04/16 15:32", action: "買入", code: "2330", qty: 100, price: 614, side: "long" },
+  { time: "04/15 14:20", action: "賣出", code: "2308", qty: 50, price: 392, side: "long" },
+  { time: "04/14 10:15", action: "買入", code: "3711", qty: 100, price: 148, side: "long" },
+  { time: "04/12 09:30", action: "買入", code: "2454", qty: 200, price: 920, side: "short" },
+];
+
+const strategyPerf = [
+  { strategy: "趨勢追蹤", return: 8.5, dd: -2.1, sharpe: 1.8 },
+  { strategy: "價值投資", return: 5.2, dd: -1.5, sharpe: 2.1 },
+  { strategy: "區間操作", return: 3.8, dd: -0.8, sharpe: 2.5 },
 ];
 
 export function Portfolio() {
-  const [showAddStock, setShowAddStock] = useState(false);
+  const [selectedPos, setSelectedPos] = useState<any>(null);
 
-  const totalValue = holdings.reduce((sum, h) => sum + h.value, 0);
-  const totalProfit = holdings.reduce((sum, h) => sum + h.profit, 0);
-  const totalProfitPercent = (totalProfit / (totalValue - totalProfit)) * 100;
-
-  const healthyCount = holdings.filter(h => h.status === "健康").length;
-  const warningCount = holdings.filter(h => h.status === "警示" || h.status === "注意").length;
+  const totalValue = 1234567;
+  const totalCost = 1180000;
+  const totalPnl = totalValue - totalCost;
+  const pnlPct = (totalPnl / totalCost) * 100;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold mb-2">持股管理與監控</h1>
-          <p className="text-gray-400">追蹤您的投資組合，即時健檢與警示</p>
-        </div>
-        <button 
-          onClick={() => setShowAddStock(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span>新增持股</span>
-        </button>
+        <h1 className="text-xl font-semibold">帳務總覽</h1>
+        <div className="text-xs text-gray-400">更新時間: 2026/04/16 15:32</div>
       </div>
 
-      {/* Market Environment */}
-      <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-6 border border-gray-800 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm opacity-90 mb-1">大盤環境分析</div>
-            <div className="text-3xl font-semibold mb-2">{marketStatus.trend} - {marketStatus.status}</div>
-            <div className="text-lg opacity-90">{marketStatus.description}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm opacity-90 mb-1">持股水位建議</div>
-            <div className="text-2xl font-semibold">{marketStatus.recommendation}</div>
-          </div>
+      {/* Summary Cards - Compact */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+          <div className="text-xs text-gray-400 mb-1">總市值</div>
+          <div className="text-xl font-bold">${totalValue.toLocaleString()}</div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400 text-sm">總持股市值</span>
-            <Wallet className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="text-3xl font-semibold mb-1">${totalValue.toLocaleString()}</div>
-          <div className={`text-sm flex items-center gap-1 ${totalProfitPercent >= 0 ? "text-green-500" : "text-red-500"}`}>
-            {totalProfitPercent >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-            {totalProfitPercent >= 0 ? "+" : ""}{totalProfitPercent.toFixed(2)}%
-          </div>
+        <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+          <div className="text-xs text-gray-400 mb-1">成本</div>
+          <div className="text-xl font-bold">${totalCost.toLocaleString()}</div>
         </div>
-
-        <div className="bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400 text-sm">未實現損益</span>
-            <TrendingUp className="w-5 h-5 text-gray-400" />
+        <div className="bg-green-600/20 rounded-lg p-3 border border-green-600/30">
+          <div className="text-xs text-green-400 mb-1">總損益</div>
+          <div className="text-xl font-bold text-green-500">
+            +${totalPnl.toLocaleString()}
           </div>
-          <div className={`text-3xl font-semibold mb-1 ${totalProfit >= 0 ? "text-green-500" : "text-red-500"}`}>
-            {totalProfit >= 0 ? "+" : ""}${totalProfit.toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-400">總損益</div>
+          <div className="text-xs text-green-400">+{pnlPct.toFixed(2)}%</div>
         </div>
-
-        <div className="bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400 text-sm">持股健康狀態</span>
-            <CheckCircle className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="text-3xl font-semibold mb-1 text-green-500">{healthyCount}</div>
-          <div className="text-sm text-gray-400">健康 / {holdings.length} 檔</div>
-        </div>
-
-        <div className="bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400 text-sm">需要關注</span>
-            <AlertTriangle className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="text-3xl font-semibold mb-1 text-yellow-500">{warningCount}</div>
-          <div className="text-sm text-gray-400">警示 / 注意</div>
+        <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+          <div className="text-xs text-gray-400 mb-1">持有倉位</div>
+          <div className="text-xl font-bold">{positions.length}</div>
+          <div className="text-xs text-gray-400">4 多 / 1 空</div>
         </div>
       </div>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="bg-[#13161f] rounded-xl p-6 border border-yellow-500/50">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-yellow-500" />
-            <h2 className="text-xl font-semibold">即時警示 ({alerts.length})</h2>
+      {/* Main Content - 2 Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Portfolio Value Chart */}
+        <div className="lg:col-span-2 bg-[#13161f] rounded-lg p-3 border border-gray-800">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold">帳務走勢</h2>
+            <div className="flex gap-1">
+              <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded">日</button>
+              <button className="px-2 py-1 text-xs bg-gray-800 text-gray-400 rounded">週</button>
+              <button className="px-2 py-1 text-xs bg-gray-800 text-gray-400 rounded">月</button>
+            </div>
           </div>
-          <div className="space-y-3">
-            {alerts.map((alert) => (
-              <div 
-                key={alert.id} 
-                className={`p-4 rounded-lg border ${
-                  alert.type === "warning" 
-                    ? "bg-yellow-500/10 border-yellow-500/30" 
-                    : "bg-blue-500/10 border-blue-500/30"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="font-medium mb-1">{alert.stock}</div>
-                    <div className="text-sm text-gray-300">{alert.message}</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={portfolioData}>
+              <defs>
+                <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+              <XAxis dataKey="date" stroke="#6b7280" fontSize={10} />
+              <YAxis stroke="#6b7280" fontSize={10} tickFormatter={(v) => `$${v/1000}k`} />
+              <Tooltip
+                contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "6px", fontSize: 11 }}
+                formatter={(value: any) => [`$${value.toLocaleString()}`, "市值"]}
+              />
+              <Area type="monotone" dataKey="total" stroke="#22c55e" fill="url(#pnlGradient)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Strategy Performance */}
+        <div className="bg-[#13161f] rounded-lg p-3 border border-gray-800">
+          <h2 className="text-sm font-semibold mb-2">策略表現</h2>
+          <div className="space-y-2">
+            {strategyPerf.map((s) => (
+              <div key={s.strategy} className="bg-[#0a0e17] rounded-lg p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium">{s.strategy}</span>
+                  <span className="text-xs text-green-500">+{s.return}%</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-400">MDD: </span>
+                    <span className="text-red-400">-{s.dd}%</span>
                   </div>
-                  <div className="text-sm text-gray-400">{alert.time}</div>
+                  <div>
+                    <span className="text-gray-400">Sharpe: </span>
+                    <span>{s.sharpe}</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Performance Chart */}
-        <div className="lg:col-span-2 bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">投資組合績效</h2>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">1月</button>
-              <button className="px-3 py-1 text-sm bg-blue-600 rounded-lg">3月</button>
-              <button className="px-3 py-1 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">1年</button>
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={performanceData}>
-              <defs>
-                <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }}
-                labelStyle={{ color: "#9ca3af" }}
-              />
-              <Area type="monotone" dataKey="value" stroke="#3b82f6" fillOpacity={1} fill="url(#portfolioGradient)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-[#13161f] rounded-xl p-6 border border-gray-800">
-          <h2 className="text-xl font-semibold mb-4">快速操作建議</h2>
-          <div className="space-y-3">
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <div className="flex items-center gap-2 text-red-500 mb-2">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="font-medium">建議減碼</span>
-              </div>
-              <div className="text-sm text-gray-300">2454 聯發科接近停損</div>
-            </div>
-            <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <div className="flex items-center gap-2 text-yellow-500 mb-2">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="font-medium">持續觀察</span>
-              </div>
-              <div className="text-sm text-gray-300">2882 國泰金跌破月線</div>
-            </div>
-            <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <div className="flex items-center gap-2 text-green-500 mb-2">
-                <CheckCircle className="w-4 h-4" />
-                <span className="font-medium">持續持有</span>
-              </div>
-              <div className="text-sm text-gray-300">2330 台積電趨勢良好</div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Holdings Table */}
-      <div className="bg-[#13161f] rounded-xl border border-gray-800 overflow-hidden">
-        <div className="p-6 border-b border-gray-800">
-          <h2 className="text-xl font-semibold">持股明細</h2>
+      {/* Positions Table - Compact */}
+      <div className="bg-[#13161f] rounded-lg border border-gray-800">
+        <div className="p-3 border-b border-gray-800">
+          <h2 className="text-sm font-semibold">持有倉位</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left p-4 text-gray-400 font-medium">股票</th>
-                <th className="text-right p-4 text-gray-400 font-medium">持有股數</th>
-                <th className="text-right p-4 text-gray-400 font-medium">成本價</th>
-                <th className="text-right p-4 text-gray-400 font-medium">現價</th>
-                <th className="text-right p-4 text-gray-400 font-medium">市值</th>
-                <th className="text-right p-4 text-gray-400 font-medium">損益</th>
-                <th className="text-right p-4 text-gray-400 font-medium">停損價</th>
-                <th className="text-left p-4 text-gray-400 font-medium">健檢狀態</th>
-                <th className="text-center p-4 text-gray-400 font-medium">操作</th>
+              <tr className="border-b border-gray-800 text-gray-400">
+                <th className="text-left p-2">股票</th>
+                <th className="text-right p-2">數量</th>
+                <th className="text-right p-2">均價</th>
+                <th className="text-right p-2">現價</th>
+                <th className="text-right p-2">成本</th>
+                <th className="text-right p-2">市值</th>
+                <th className="text-right p-2">損益</th>
+                <th className="text-right p-2">報酬率</th>
+                <th className="text-center p-2">方向</th>
               </tr>
             </thead>
             <tbody>
-              {holdings.map((holding) => (
-                <tr key={holding.id} className="border-b border-gray-800 hover:bg-[#0a0e17] transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-semibold">{holding.symbol.slice(0, 2)}</span>
-                      </div>
-                      <div>
-                        <div className="font-medium">{holding.symbol}</div>
-                        <div className="text-sm text-gray-400">{holding.name}</div>
-                      </div>
-                    </div>
+              {positions.map((pos) => (
+                <tr key={pos.code} className="border-b border-gray-800/50 hover:bg-[#0a0e17] cursor-pointer" onClick={() => setSelectedPos(pos)}>
+                  <td className="p-2">
+                    <div className="font-semibold">{pos.code}</div>
+                    <div className="text-gray-400 text-xs">{pos.name}</div>
                   </td>
-                  <td className="p-4 text-right">{holding.shares.toLocaleString()}</td>
-                  <td className="p-4 text-right text-gray-400">${holding.avgCost}</td>
-                  <td className="p-4 text-right font-medium">${holding.currentPrice}</td>
-                  <td className="p-4 text-right font-medium">${holding.value.toLocaleString()}</td>
-                  <td className="p-4 text-right">
-                    <div className={holding.profit >= 0 ? "text-green-500" : "text-red-500"}>
-                      <div className="font-medium">
-                        {holding.profit >= 0 ? "+" : ""}${holding.profit}
-                      </div>
-                      <div className="text-sm flex items-center justify-end gap-1">
-                        {holding.profitPercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                        {holding.profitPercent >= 0 ? "+" : ""}{holding.profitPercent.toFixed(2)}%
-                      </div>
-                    </div>
+                  <td className="text-right p-2 font-variant-numeric">{pos.qty}</td>
+                  <td className="text-right p-2 text-gray-400 font-variant-numeric">${pos.avg}</td>
+                  <td className="text-right p-2 font-semibold font-variant-numeric">${pos.cur}</td>
+                  <td className="text-right p-2 text-gray-400 font-variant-numeric">${(pos.qty * pos.avg).toLocaleString()}</td>
+                  <td className="text-right p-2 font-variant-numeric">${(pos.qty * pos.cur).toLocaleString()}</td>
+                  <td className={`text-right p-2 font-semibold font-variant-numeric ${pos.pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
+                    {pos.pnl >= 0 ? "+" : ""}{pos.pnl.toLocaleString()}
                   </td>
-                  <td className="p-4 text-right text-red-500 font-medium">${holding.stopLoss}</td>
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <span className={`inline-block px-2 py-1 rounded text-xs ${
-                        holding.status === "健康" ? "bg-green-500/20 text-green-500" :
-                        holding.status === "警示" ? "bg-red-500/20 text-red-500" :
-                        "bg-yellow-500/20 text-yellow-500"
-                      }`}>
-                        {holding.status}
-                      </span>
-                      {holding.signals.map((signal, idx) => (
-                        <div key={idx} className="text-xs text-green-500 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          {signal}
-                        </div>
-                      ))}
-                      {holding.warnings.map((warning, idx) => (
-                        <div key={idx} className="text-xs text-red-500 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          {warning}
-                        </div>
-                      ))}
-                    </div>
+                  <td className={`text-right p-2 font-semibold ${pos.pct >= 0 ? "text-green-500" : "text-red-500"}`}>
+                    {pos.pct >= 0 ? "+" : ""}{pos.pct.toFixed(2)}%
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
-                    </div>
+                  <td className="text-center p-2">
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${pos.side === "long" ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}>
+                      {pos.side === "long" ? "多" : "空"}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Recent Trades */}
+      <div className="bg-[#13161f] rounded-lg border border-gray-800">
+        <div className="p-3 border-b border-gray-800">
+          <h2 className="text-sm font-semibold">近期成交</h2>
+        </div>
+        <div className="divide-y divide-gray-800">
+          {recentTrades.map((t, i) => (
+            <div key={i} className="p-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">{t.time}</span>
+                <span className={`px-1.5 py-0.5 rounded text-xs ${t.action === "買入" ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}>
+                  {t.action}
+                </span>
+                <span className="font-medium">{t.code}</span>
+              </div>
+              <div className="text-right">
+                <div className="text-xs">{t.qty} 股 @ ${t.price}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
