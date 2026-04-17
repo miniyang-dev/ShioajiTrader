@@ -56,20 +56,20 @@ export function Login() {
               <path d="M3 9h18M9 3v18" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
           </div>
-          <span className="login-logo-text">ShioajiTrader</span>
+          <span className="login-logo-text">IreneTrader</span>
         </div>
 
         <h1 className="login-title">登入帳戶</h1>
-        <p className="login-subtitle">連接永豐 shioaji API</p>
+        <p className="login-subtitle">連接永豐金融 API</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-field">
-            <label htmlFor="apiKey" className="login-label">帳號</label>
+            <label htmlFor="apiKey" className="login-label">Account</label>
             <input
               id="apiKey"
               type="text"
               className="login-input"
-              placeholder="輸入帳號"
+              placeholder="Enter your Account"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               autoComplete="username"
@@ -78,12 +78,12 @@ export function Login() {
           </div>
 
           <div className="login-field">
-            <label htmlFor="apiSecret" className="login-label">密碼</label>
+            <label htmlFor="apiSecret" className="login-label">Password</label>
             <input
               id="apiSecret"
               type="password"
               className="login-input"
-              placeholder="輸入密碼"
+              placeholder="Enter your password"
               value={apiSecret}
               onChange={(e) => setApiSecret(e.target.value)}
               autoComplete="current-password"
@@ -115,7 +115,7 @@ export function Login() {
         </form>
 
         <div className="login-demo">
-          <span className="login-demo-label">測試帳號</span>
+          <span className="login-demo-label">Demo</span>
           <code className="login-demo-cred">Irene / pass.1234</code>
         </div>
       </div>
